@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steady Hands · Operator</title>
+<style>
+:root{
+  --bg:#f6f7f4; --card:#ffffff; --card2:#f0f2ed; --card3:#e6e9e0; --ink:#1c211d; --ink2:#5c665c; --ink3:#94a091;
+  --accent:#2c6e68; --accent-tint:#e3f0ed; --warn:#b1503e; --warn-tint:#fbe8e3; --good:#2c6e68;
+  --c-block:#2c6e68; --c-block-tint:#e3f0ed;
+  --c-probe:#6d4f8a; --c-probe-tint:#efe7f5;
+  --c-assess:#a06a20; --c-assess-tint:#f6ead4;
+  --c-break:#3c7a4d; --c-break-tint:#e6f2e8;
+  --c-flow:#5c665c; --c-flow-tint:#eef0eb;
+  --shadow:0 1px 2px rgba(28,33,29,.04), 0 6px 16px rgba(28,33,29,.05);
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#f6f7f4; --card:#ffffff; --card2:#f0f2ed; --card3:#e6e9e0; --ink:#1c211d; --ink2:#5c665c; --ink3:#94a091;
+    --accent:#2c6e68; --accent-tint:#e3f0ed; --warn:#b1503e; --warn-tint:#fbe8e3;
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); -webkit-font-smoothing:antialiased;}
+.wrap{max-width:520px; margin:0 auto; padding:0 16px 40px;}
+
+header{position:sticky; top:0; z-index:20; background:var(--bg); padding-top:calc(env(safe-area-inset-top,0px) + 14px);}
+.hd-row{display:flex; align-items:center; gap:8px; padding:0 16px 14px; max-width:520px; margin:0 auto;}
+.hd-title{flex:1; min-width:0;}
+.hd-title h1{margin:0; font-size:18px; font-weight:700; line-height:1.2;}
+.hd-code{border:none; background:none; font-size:12px; color:var(--ink3); padding:2px 0; width:100%;}
+.hd-clock{text-align:right; font-family:var(--mono);}
+.hd-clock .n{font-size:20px; font-weight:600;}
+.hd-clock .l{font-size:9px; color:var(--ink3); letter-spacing:.06em;}
+.iconbtn{width:36px; height:36px; border-radius:50%; border:none; background:var(--card2);
+  color:var(--ink2); font-size:16px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+
+.strip{display:flex; gap:6px; overflow-x:auto; padding:2px 16px 16px; margin:0 -16px; scrollbar-width:none;}
+.strip::-webkit-scrollbar{display:none;}
+.chip{flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:12px; font-weight:600; background:var(--card2); color:var(--ink3); border:none;}
+.chip.done{background:var(--accent); color:#fff;}
+.chip.now{background:var(--card); color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset;}
+
+.now{background:var(--card); border-radius:20px; padding:20px; box-shadow:var(--shadow); margin-top:2px;}
+.now .tag{font-family:var(--mono); font-size:10px; letter-spacing:.04em; padding:3px 9px; border-radius:20px; display:inline-block;}
+.now .tag.steady{background:var(--c-block-tint); color:var(--c-block);}
+.now .tag.bumpy{background:var(--c-probe-tint); color:var(--c-probe);}
+.now .tag.split{background:var(--c-assess-tint); color:var(--c-assess);}
+.now .tag.watch{background:var(--c-break-tint); color:var(--c-break);}
+.now .tag.check{background:var(--c-flow-tint); color:var(--c-flow);}
+.now .tag.flow{background:var(--c-flow-tint); color:var(--c-flow);}
+.now h2{font-size:24px; margin:10px 0 2px; font-weight:700;}
+.now .sub{font-size:13.5px; color:var(--ink2); margin-bottom:14px;}
+
+.trackwrap{background:var(--card2); border-radius:16px; overflow:hidden; margin-bottom:10px;}
+canvas#track-canvas, canvas#demo-canvas, canvas#fig-canvas{width:100%; display:block;}
+.zonebar{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--ink3); margin:-2px 2px 10px;}
+.holdrow{margin-bottom:12px;}
+.dragstrip{position:relative; height:54px; background:var(--card2); border-radius:27px; margin-bottom:6px; touch-action:none;}
+.draghandle{position:absolute; top:3px; left:50%; width:48px; height:48px; border-radius:50%; background:var(--accent);
+  transform:translateX(-50%); display:flex; align-items:center; justify-content:center; color:#fff; font-size:19px; transition:background .1s;}
+.draghint{text-align:center; font-size:11px; color:var(--ink3); margin:0 0 12px;}
+button.hold{font-size:24px; padding:18px; background:var(--card2); transition:transform .1s, background .1s;}
+button.hold:active{background:var(--accent-tint); transform:scale(0.92);}
+.splittask{display:flex; align-items:center; gap:10px; margin-bottom:14px; background:var(--card2); border-radius:14px; padding:10px 14px; transition:background .3s;}
+.splittask.flash-ok{animation:flashOk .45s ease;}
+.splittask.flash-bad{animation:flashBad .45s ease;}
+@keyframes flashOk{0%{background:var(--c-block-tint);} 100%{background:var(--card2);}}
+@keyframes flashBad{0%{background:var(--warn-tint);} 100%{background:var(--card2);}}
+.split-q{font-family:var(--mono); font-size:18px; font-weight:700; min-width:64px;}
+.split-score{font-family:var(--mono); font-size:12px; color:var(--ink3); margin-left:auto;}
+
+.timerbig{font-family:var(--mono); font-size:44px; font-weight:600; text-align:center; margin:6px 0 2px; letter-spacing:.01em;}
+.timertarget{text-align:center; font-size:11.5px; color:var(--ink3); margin-bottom:14px;}
+.btnrow{display:flex; gap:8px; flex-wrap:wrap;}
+button{font-family:var(--sans); font-size:15px; font-weight:600; border-radius:13px; border:none;
+  background:var(--card2); color:var(--ink); padding:14px 16px; cursor:pointer; flex:1; min-height:50px;}
+button.primary{background:var(--accent); color:#fff;}
+button.warn{background:var(--warn-tint); color:var(--warn);}
+button.ghost{background:transparent; color:var(--ink2);}
+button:disabled{opacity:.35;}
+button.small{flex:0 0 auto; padding:11px 14px; min-height:44px; font-size:14px;}
+
+.kssdisplay{text-align:center; margin:14px 0 2px;}
+.kssnum{font-family:var(--mono); font-size:48px; font-weight:700; color:var(--c-assess);}
+.kssdesc{text-align:center; font-size:13px; color:var(--ink3); min-height:36px; margin:2px 0 14px; padding:0 10px;}
+.kssrange{-webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:4px; background:var(--card2); accent-color:var(--c-assess); margin:8px 0 4px;}
+.kssrange::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:30px; height:30px; border-radius:50%; background:var(--c-assess); cursor:pointer; border:3px solid var(--bg,#fff);}
+.kssrange::-moz-range-thumb{width:30px; height:30px; border-radius:50%; background:var(--c-assess); cursor:pointer; border:3px solid var(--bg,#fff);}
+.scalehint{display:flex; justify-content:space-between; font-size:11px; color:var(--ink3); margin-bottom:14px;}
+
+.checklist label{display:flex; gap:10px; align-items:center; padding:10px 0; font-size:15px;}
+.checklist input{width:20px; height:20px; flex:0 0 auto;}
+
+.flash{height:120px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:16px; margin-bottom:14px; background:var(--card2); color:var(--ink3); transition:transform .15s;}
+.flash.go{background:var(--good); color:#fff; font-size:22px; animation:breathe 1s ease-in-out infinite;}
+.flash.early{background:var(--warn); color:#fff;}
+.flash.watching{animation:breathe 2.4s ease-in-out infinite;}
+.flash.hit{transform:scale(1.05); background:var(--good); color:#fff;}
+/* Fatigue Induction's tap target — an actual circle, distinct from PVT's
+   rectangular flash card (which keeps the plain .flash box above). */
+.flash-circle{width:150px; max-width:60vw; aspect-ratio:1; border-radius:50%; margin:0 auto 14px; box-shadow:0 2px 10px rgba(0,0,0,0.12);}
+@keyframes breathe{0%,100%{opacity:.85; transform:scale(1);} 50%{opacity:1; transform:scale(1.03);}}
+.pvtstats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; font-family:var(--mono); font-size:11.5px;}
+.pvtstats div{background:var(--card2); border-radius:11px; padding:9px 11px; color:var(--ink3);}
+.pvtstats b{display:block; font-size:17px; margin-top:2px; color:var(--ink); font-family:var(--sans);}
+
+.sumrow{display:flex; justify-content:space-between; font-size:14px; padding:8px 4px; border-radius:10px;}
+.sumrow:nth-child(odd){background:var(--card2);}
+
+.donelist{margin-top:18px;}
+.dlrow{display:flex; align-items:center; gap:10px; padding:11px 10px; font-size:14px; border-radius:12px;}
+.dlrow:nth-child(odd){background:var(--card2);}
+.dlrow .ck{width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px;
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+.dlrow .nm{flex:1;}
+.dlrow .du{font-family:var(--mono); font-size:12px; color:var(--ink3); text-align:right;}
+
+.logsec{margin-top:22px;}
+.logsec summary{font-size:12px; color:var(--ink3); letter-spacing:.03em; cursor:pointer; padding:4px 0;}
+.logline{font-family:var(--mono); font-size:11px; color:var(--ink2); padding:6px 10px; display:flex; gap:8px; border-radius:10px;}
+.logline:nth-child(odd){background:var(--card2);}
+.logline .t{color:var(--ink3); flex:0 0 auto;}
+.empty{font-size:12.5px; color:var(--ink3); padding:8px 0;}
+
+.screenhead{display:flex; align-items:center; gap:10px; margin:4px 0 14px;}
+.screenhead h2{font-size:20px; margin:0; flex:1;}
+.blurb{font-size:13.5px; color:var(--ink2); margin-bottom:16px; line-height:1.4;}
+
+.beatlabel{font-family:var(--mono); font-size:11px; color:var(--ink3); letter-spacing:.04em; margin-bottom:6px;}
+
+.figlegend{display:flex; gap:14px; font-size:12px; color:var(--ink2); margin:10px 0 4px; flex-wrap:wrap;}
+.figlegend span{display:flex; align-items:center; gap:6px;}
+.figlegend i{width:10px; height:10px; border-radius:50%; display:inline-block;}
+.caption{font-size:13px; color:var(--ink2); margin-top:6px;}
+
+.barcard{background:var(--card); border-radius:16px; padding:16px; box-shadow:var(--shadow); margin-bottom:14px;}
+.barcard h3{font-size:14px; margin:0 0 12px;}
+.barrow{margin-bottom:10px;}
+.barrow .lbl{display:flex; justify-content:space-between; font-size:12px; color:var(--ink2); margin-bottom:4px;}
+.bartrack{background:var(--card2); border-radius:8px; height:14px; overflow:hidden;}
+.barfill{height:100%; border-radius:8px;}
+.tablewrap{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:12.5px;}
+th,td{text-align:left; padding:7px 8px;}
+tbody tr:nth-child(odd){background:var(--card2);}
+th{color:var(--ink3); font-weight:600; font-size:11px;}
+
+.sheetlist button{display:flex; width:100%; text-align:left; margin-bottom:8px; background:var(--card2);}
+.sheetlist button:last-child{margin-bottom:0;}
+
+.modal-bg{position:fixed; inset:0; background:rgba(20,24,20,.45); display:flex; align-items:flex-end; z-index:50;}
+.modal-card{background:var(--card); width:100%; border-radius:20px 20px 0 0; padding:22px; padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));}
+.modal-card h3{margin:0 0 8px; font-size:17px;}
+.modal-card p{font-size:14px; color:var(--ink2); line-height:1.5; margin:0 0 16px;}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-row">
+    <div class="hd-title">
+      <h1 id="hd-name">Steady Hands</h1>
+      <div class="hd-code" id="hd-code">no participant yet</div>
+    </div>
+    <div class="hd-clock"><div class="n" id="hd-elapsed">00:00</div><div class="l">ELAPSED</div></div>
+    <button class="iconbtn" id="menu-btn" aria-label="Menu" title="Menu">⋯</button>
+  </div>
+  <div class="strip" id="strip"></div>
+</header>
+
+<div class="wrap">
+  <div id="mainview">
+    <div id="nowcard"></div>
+    <div class="donelist" id="donelist"></div>
+    <div class="logsec"><details><summary>Session log</summary><div id="log" style="margin-top:8px"></div></details></div>
+  </div>
+  <div id="otherview" hidden></div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" hidden>
+<input type="file" id="analyze-file" accept="application/json,.json,.csv,text/csv" multiple hidden>
+<div class="modal-bg" id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
+
+<script>
+"use strict";
+
+/* ── movement profiles for the tracking task ───────────────
+   Position error e drifts on its own (integrator, no natural
+   restoring force) and is only brought back by holding a button.
+
+   roadExtra calibration (2026-09-22): this used to be an unset placeholder
+   (0.05). It's now sized from Study 1's own field measurement, not guessed.
+   Each tick, road jitter is uniform(-roadExtra/2, +roadExtra/2), so its
+   variance is roadExtra^2/12; the baseline noise term's per-tick variance
+   is noiseSD^2 * Var(U1+U2+U3-1.5) = noiseSD^2 * 0.25. Study 1's clean-
+   driving lateral-acceleration variance, pooled across both vehicles and
+   sample-weighted, is ~2.0x higher on rough surfaces (Patched Bitumen +
+   Speed Bumps, the "jolts" this condition is meant to evoke) than on smooth
+   ones (National Highway + Urban Arterial) — 0.0406 vs 0.0208 m^2/s^4.
+   Solving roadExtra so the sim's road:baseline variance ratio matches that
+   ~2.0x gives roadExtra=0.068 (was 0.05, i.e. ~1.36x the old amplitude).
+   Cross-check: the full v13 runner's own separately-calibrated task/road
+   forcing ratio (roadRms/baseRms = 0.235/0.105 = 2.24x variance) lands in
+   the same neighborhood, so this isn't an outlier choice.
+   Un-Paved (2026-09-22 update): originally excluded from the above and
+   folded into a single "Road Condition" block, because it's a different
+   order of roughness — ~6.3x smooth-road variance (0.1302 m^2/s^4, vehicle
+   1 only, no vehicle-2 data yet) vs. the ~2.0x of ordinary bumpy paved
+   roads — and lumping the two together would have made neither condition
+   mean anything specific. It's now split out as its own profile/step
+   instead, same derivation as above: solving roadExtra so the sim's
+   road:baseline variance ratio matches that ~6.3x gives roadExtra=0.121.
+   The 300s that "Road Condition" (and its "Fatigued Road" repeat) used to
+   get is now split 150s/150s between the bumpy-paved and un-paved variants,
+   so total session time is unchanged. corrRate is untouched for both —
+   Study 1's accelerometer data has nothing to say about how fast a
+   participant corrects steering, so that stays a task-feel choice, not a
+   calibrated one. */
+const KSS_LABELS = [
+  'Extremely alert',
+  'Very alert',
+  'Alert',
+  'Rather alert',
+  'Neither alert nor sleepy',
+  'Some signs of sleepiness',
+  'Sleepy, but no effort to stay awake',
+  'Sleepy, some effort to stay awake',
+  'Very sleepy, fighting sleep'
+];
+const PROFILES = {
+  baseline:    {noiseSD:0.028, road:false, roadExtra:0,     pert:true, pertAmt:0.9, pertMin:12, pertMax:19, load:false, corrRate:1.7, control:'hold'},
+  road:        {noiseSD:0.028, road:true,  roadExtra:0.068, pert:true, pertAmt:0.9, pertMin:12, pertMax:19, load:false, corrRate:2.2, control:'drag'},
+  roadUnpaved: {noiseSD:0.028, road:true,  roadExtra:0.121, pert:true, pertAmt:0.9, pertMin:12, pertMax:19, load:false, corrRate:2.2, control:'drag'},
+  load:        {noiseSD:0.028, road:false, roadExtra:0,     pert:true, pertAmt:0.9, pertMin:12, pertMax:19, load:true,  corrRate:0,   control:'tap', nudge:0.5}
+};
+
+const STEPS = [
+  {t:'name',   title:'Participant',       tag:'flow',  dur:0,    desc:'', profile:null},
+  {t:'consent', title:'Consent',          tag:'flow',  dur:0,    desc:'', profile:null},
+  {t:'timer',  title:'Baseline',          tag:'steady', dur:300,  desc:'Steady Hand — hold ◀▶ to correct, nothing else going on', profile:'baseline'},
+  {t:'timer',  title:'Bumpy Road',        tag:'bumpy',  dur:150,  desc:'Patched bitumen / speed bumps — drag to steer through the jolts', profile:'road'},
+  {t:'timer',  title:'Un-Paved Road',     tag:'bumpy',  dur:150,  desc:'Unpaved surface — drag to steer, rougher than the last one', profile:'roadUnpaved'},
+  {t:'timer',  title:'Cognitive Load',    tag:'split',  dur:300,  desc:'Split Focus — tap to nudge, while solving sums',         profile:'load'},
+  {t:'kss',    title:'KSS',               tag:'check', dur:0,    desc:'Sleepiness rating', profile:null},
+  {t:'pvt',    title:'PVT',               tag:'check', dur:180,  desc:'Quick Tap — tap the instant it turns green', profile:null},
+  {t:'vigil',  title:'Fatigue Induction', tag:'watch', dur:1620, desc:'The Long Watch — no tracking, just tedium on purpose', profile:null},
+  {t:'timer',  title:'Fatigued Baseline', tag:'steady', dur:300,  desc:'Steady Hand again, now tired — compare to before', profile:'baseline'},
+  {t:'timer',  title:'Fatigued Bumpy Road',    tag:'bumpy',  dur:150,  desc:'Bumpy Road again, now tired — compare to before', profile:'road'},
+  {t:'timer',  title:'Fatigued Un-Paved Road', tag:'bumpy',  dur:150,  desc:'Un-Paved Road again, now tired — compare to before', profile:'roadUnpaved'},
+  {t:'timer',  title:'Break',             tag:'flow',  dur:300,  desc:'Seated, no task', profile:null},
+  {t:'action', title:'Finish Session',    tag:'flow',  dur:0,    desc:'', profile:null}
+];
+const TAGLABEL = {steady:'STEADY HAND', bumpy:'BUMPY ROAD', split:'SPLIT FOCUS', watch:'LONG WATCH', check:'CHECK', flow:'—'};
+
+let S = { code:'', name:'', current:0, startedAt:null, withdrawn:false, finalized:false, completedSuccessfully:null, steps: STEPS.map(()=>({status:'locked', startedAt:null, endedAt:null, value:null})), log:[] };
+let tickHandle=null;
+let uiView='main';
+
+/* Testing-only skip. Off by default and stored separately from session data
+   (it's a device setting for whoever is testing, not part of a real run) —
+   toggled from the menu. When on, a Skip button appears on the current step
+   and calls whichever step's own skip-to-complete logic is active. */
+let testMode=false;
+try{ testMode = localStorage.getItem('sh_operator_testmode')==='1'; }catch(e){}
+function setTestMode(v){ testMode=!!v; try{ localStorage.setItem('sh_operator_testmode', testMode?'1':'0'); }catch(e){} }
+let skipCurrentStepFn=null; // set by the active step's wiring; cleared on every render
+
+/* runtime-only state for the running tracking task — never persisted */
+let engineRuntime={}, engineInterval=null, splitInterval=null;
+let holdDir={left:false, right:false};
+let dragValue=0;
+
+/* Name -> a short ID (kept alongside the name, not instead of it — the
+   participant's name is saved with the session, see S.name below). This ID
+   is just a stable, deterministic short tag for filenames and the header,
+   so re-entering the same name resumes cleanly. FNV-1a 32-bit, base36. */
+function anonymizeName(name){
+  const norm=String(name||'').trim().toLowerCase().replace(/\s+/g,' ');
+  let h=0x811c9dc5;
+  for(let i=0;i<norm.length;i++){ h^=norm.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  return 'SH-'+h.toString(36).toUpperCase().padStart(7,'0');
+}
+function nowISO(){ return new Date().toISOString(); }
+/* True only if every real step (everything before the final wrap-up step)
+   finished normally and the participant never withdrew. */
+function sessionCompletedSuccessfully(){
+  if(S.withdrawn) return false;
+  return S.steps.slice(0, STEPS.length-1).every(s=>s.status==='done');
+}
+/* Ends the session immediately — used by Withdraw. Skips straight to the
+   final wrap-up step so completion status and saving happen automatically,
+   same as reaching the end normally. */
+function jumpToFinish(){
+  stopTicker(); pauseCurrentEngine();
+  const finishIdx=STEPS.length-1;
+  S.current=finishIdx;
+  S.steps[finishIdx].status='current';
+  save(); renderApp();
+}
+function fmtClock(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return h>0 ? h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0') : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cssvar(name){ try{ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }catch(e){ return '#888'; } }
+function save(){ try{ localStorage.setItem('sh_operator_v10', JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{ const raw=localStorage.getItem('sh_operator_v10'); if(!raw) return;
+    const rec=JSON.parse(raw); if(rec && Array.isArray(rec.steps) && rec.steps.length===STEPS.length) S=rec;
+  }catch(e){}
+}
+function log(msg){ S.log.push({at:nowISO(), msg}); save(); renderLog(); }
+
+async function saveFile(filename, text, mime){
+  if(window.claude && typeof window.claude.use==='function'){
+    /* Running inside the claude.ai viewer: this is the ONLY path that can
+       actually save a file here. The blob+anchor trick below is inert on
+       a published page, so it must never be used as a silent fallback —
+       that was the bug: it looked like it worked but saved nothing. */
+    try{
+      const downloads = await window.claude.use('downloads');
+      if(!downloads) return {ok:false, reason:'Downloads aren\u2019t available in this view.'};
+      await downloads.save({filename, data:text});
+      return {ok:true};
+    }catch(e){
+      return {ok:false, reason:'The save prompt was declined or failed. Tap the ⬇ button again and choose Save/Allow when your browser asks.'};
+    }
+  }
+  /* No window.claude → this is a plain local file open in a normal
+     browser (not the claude.ai sandbox), where the blob+anchor download
+     genuinely works. */
+  try{
+    const blob=new Blob([text], {type:mime||'application/json'});
+    const url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1000);
+    return {ok:true};
+  }catch(e){ return {ok:false, reason:'Your browser blocked the download.'}; }
+}
+const ADMIN_EMAILS=['samrudhi.mahadik@onmyowntechnology.com','samrudhimahadik2002@gmail.com'];
+
+/* Direct-to-Drive save. Paste the "Web app URL" you get after deploying the
+   Apps Script below (see StadyHands_DriveUpload.gs) between the quotes.
+   Until it's set, saveToDrive() falls back to a local file download so no
+   session data is ever lost.
+
+   ONE-TIME SETUP (do this once, from whichever Google account should own
+   the saved files):
+     1. Go to script.google.com -> New project.
+     2. Delete the placeholder code, paste in the contents of
+        StadyHands_DriveUpload.gs (delivered alongside this file).
+     3. Deploy -> New deployment -> gear icon -> type "Web app".
+        - Execute as: Me
+        - Who has access: Anyone
+     4. Click Deploy, authorize it, then copy the "Web app URL" it gives you.
+     5. Paste that URL below as DRIVE_ENDPOINT and re-save this HTML file.
+     Sessions will then land in a Drive folder named "Steady Hands Sessions"
+     under that account, no email or manual upload required. */
+const DRIVE_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxEhBHmNr6-a9BykSdzIMwptqnhUGzIeMOmh5m0MyWEeFyEnSSY-avhqHedqO77MxDimA/exec';
+async function saveToDrive(){
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const filename='steadyhands_'+(S.code||'session')+'_'+stamp+'.json';
+  const content=JSON.stringify(S,null,2);
+  if(!DRIVE_ENDPOINT){ log('Drive endpoint not configured — saved to this device instead'); exportSession(); return false; }
+  try{
+    const res=await fetch(DRIVE_ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids a CORS preflight against Apps Script
+      body: JSON.stringify({filename, content})
+    });
+    const data=await res.json().catch(()=>null);
+    if(data && data.ok){ log('Saved to Drive — '+filename); return true; }
+    log('Drive save did not confirm — saved to this device as a backup'); exportSession(); return false;
+  }catch(err){
+    log('Could not reach Drive — saved to this device as a backup'); exportSession(); return false;
+  }
+}
+function sessionSummaryText(){
+  const lines=[ 'Steady Hands session — '+(S.name?S.name+' ':'')+'('+(S.code||'no code')+')', 'Finished '+new Date().toLocaleString(), '' ];
+  STEPS.forEach((s,idx)=>{
+    const st=S.steps[idx]; if(st.status!=='done') return;
+    let extra='';
+    if(st.value && st.value.sdlp!=null) extra=' — SDLP '+st.value.sdlp+', '+st.value.pertCount+' bump(s)';
+    else if(st.value && st.value.medianRT!=null) extra=' — median RT '+st.value.medianRT+'ms, '+st.value.lapses+' lapse(s)';
+    else if(st.value && st.value.hits!=null) extra=' — '+st.value.hits+' hit(s), best streak '+(st.value.bestStreak||0);
+    else if(typeof st.value==='number') extra=' — KSS '+st.value;
+    lines.push(s.title+extra);
+  });
+  return lines.join('\n');
+}
+/* Best-effort email to admin. A browser page cannot silently send mail on
+   its own — this tries a no-account mail relay (FormSubmit) first, and
+   falls back to opening a pre-filled email draft if that's blocked. */
+async function emailSessionToAdmin(){
+  const summary=sessionSummaryText();
+  const payload=JSON.stringify(S,null,2);
+  const results=await Promise.all(ADMIN_EMAILS.map(addr=>
+    fetch('https://formsubmit.co/ajax/'+addr, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({_subject:'Steady Hands session — '+(S.code||'no code'), summary, session_json:payload})
+    }).then(res=>res.ok).catch(()=>false)
+  ));
+  const okCount=results.filter(Boolean).length;
+  if(okCount===ADMIN_EMAILS.length){ log('Session emailed to '+ADMIN_EMAILS.join(', ')); return; }
+  const body=encodeURIComponent(summary+'\n\n(The full data file was downloaded separately — please attach it here.)');
+  const subject=encodeURIComponent('Steady Hands session — '+(S.code||'no code'));
+  window.location.href='mailto:'+ADMIN_EMAILS.join(',')+'?subject='+subject+'&body='+body;
+  log(okCount===0
+    ? 'Could not auto-send to either address — opened a draft email instead'
+    : 'Only reached '+okCount+' of '+ADMIN_EMAILS.length+' addresses — opened a draft email as backup');
+}
+function saveSessionData(){
+  /* Saves straight to Drive (see DRIVE_ENDPOINT above) — no email, no manual
+     upload. If the Drive endpoint isn't reachable it silently falls back to
+     a local file download inside saveToDrive() itself, so nothing is lost. */
+  saveToDrive();
+}
+function exportSession(){
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const filename='steadyhands_'+(S.code||'session')+'_'+stamp+'.json';
+  return saveFile(filename, JSON.stringify(S,null,2), 'application/json').then(res=>{
+    if(res.ok){ log('Session file saved'); }
+    else{
+      log('Save failed — '+res.reason);
+      openModal('<h3>Could not save</h3><p>'+esc(res.reason)+'</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      const b=document.getElementById('m-close'); if(b) b.onclick=closeModal;
+    }
+    return res.ok;
+  });
+}
+function importSessionFromText(text){
+  try{
+    const rec=JSON.parse(text);
+    if(!rec || !Array.isArray(rec.steps) || rec.steps.length!==STEPS.length) throw new Error('shape');
+    S=rec;
+    const firstOpen = S.steps.findIndex(s=>s.status!=='done');
+    S.current = firstOpen<0 ? STEPS.length : firstOpen;
+    if(firstOpen>=0) S.steps[firstOpen].status='current';
+    save(); log('Session loaded from file'); renderApp();
+    if(S.startedAt) startTicker();
+  }catch(e){
+    openModal('<h3>Could not load file</h3><p>That file does not look like a Steady Hands session export.</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+    document.getElementById('m-close').onclick=closeModal;
+  }
+}
+
+/* ── top-level render dispatch ─────────────────────────────── */
+function renderApp(){
+  document.getElementById('mainview').hidden = uiView!=='main';
+  document.getElementById('otherview').hidden = uiView==='main';
+  if(uiView==='main'){ render(); document.getElementById('hd-name').textContent = S.current>=STEPS.length?'Complete':(S.startedAt?STEPS[S.current].title:'Steady Hands'); }
+  else if(uiView==='demo'){ document.getElementById('hd-name').textContent='Demonstration'; renderDemo(); }
+  else if(uiView==='analyze'){ document.getElementById('hd-name').textContent='Trace'; renderAnalyze(); }
+  updateElapsed();
+}
+function goMain(){ pauseCurrentEngine(); uiView='main'; renderApp(); }
+
+function render(){ renderStrip(); renderNow(); renderDoneList(); renderLog(); document.getElementById('hd-code').textContent = S.code ? (S.name?S.name+' · ':'')+S.code : 'no participant yet'; }
+function updateElapsed(){
+  const el=document.getElementById('hd-elapsed');
+  el.textContent = S.startedAt ? fmtClock((Date.now()-new Date(S.startedAt).getTime())/1000) : '00:00';
+}
+function renderStrip(){
+  const host=document.getElementById('strip'); host.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const st=S.steps[i];
+    const b=document.createElement('button');
+    b.className='chip '+(st.status==='done'?'done':i===S.current?'now':'');
+    b.textContent = st.status==='done' ? '✓' : (i+1);
+    if(st.status==='done') b.onclick=()=>peek(i);
+    host.appendChild(b);
+  });
+}
+function peek(i){
+  const s=STEPS[i], st=S.steps[i];
+  const dur = st.startedAt && st.endedAt ? fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000) : '—';
+  let extra='';
+  if(st.value && st.value.sdlp!=null) extra='<p>SDLP '+st.value.sdlp+' · '+st.value.pertCount+' perturbation(s)</p>';
+  if(st.value && st.value.medianRT!=null) extra='<p>Median RT '+st.value.medianRT+'ms · '+st.value.lapses+' lapse(s)</p>';
+  if(st.value && st.value.hits!=null) extra='<p>'+st.value.hits+' hit(s) · '+st.value.misses+' miss(es) · best streak '+(st.value.bestStreak||0)+'</p>';
+  openModal('<h3>'+esc(s.title)+'</h3><p>Duration '+dur+'</p>'+extra+'<div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+  document.getElementById('m-close').onclick=closeModal;
+}
+
+function renderNow(){
+  const host=document.getElementById('nowcard');
+  if(S.current>=STEPS.length){ host.innerHTML=''; return; }
+  const step=STEPS[S.current], st=S.steps[S.current];
+  let control='';
+  if(step.t==='name') control = namePanel();
+  else if(step.t==='action') control = actionPanel(step);
+  else if(step.t==='consent') control = consentPanel();
+  else if(step.t==='timer') control = timerPanel(step, st);
+  else if(step.t==='kss') control = kssPanel();
+  else if(step.t==='pvt') control = pvtPanel();
+  else if(step.t==='vigil') control = vigilPanel(step);
+  const showSkip = testMode && step.t!=='action';
+  host.innerHTML = `<div class="now">
+    <span class="tag ${step.tag}">${TAGLABEL[step.tag]}</span>
+    <h2>${esc(step.title)}</h2>
+    ${step.desc?`<div class="sub">${esc(step.desc)}</div>`:'<div class="sub" style="height:4px"></div>'}
+    ${control}
+    ${showSkip?`<div class="btnrow" style="margin-top:10px"><button class="ghost" id="test-skip">⏭ Skip step (testing mode)</button></div>`:''}
+  </div>`;
+  skipCurrentStepFn=null;
+  wirePanel(step, st, S.current);
+  if(step.profile) ensureEngineBoundTo(S.current, step, st);
+  if(showSkip){
+    const skipBtn=document.getElementById('test-skip');
+    if(skipBtn) skipBtn.onclick=()=>{ if(skipCurrentStepFn) skipCurrentStepFn(); };
+  }
+}
+
+function actionPanel(step){
+  if(step.title==='Finish Session'){
+    const rows=STEPS.map((s,k)=>{
+      const st=S.steps[k];
+      const dur=st.startedAt&&st.endedAt?fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000):'—';
+      return `<div class="sumrow"><span>${esc(s.title)}</span><span>${dur}</span></div>`;
+    }).join('');
+    const ok=sessionCompletedSuccessfully();
+    const banner=`<div class="blurb" style="margin-top:0;padding:12px 14px;border-radius:12px;font-weight:600;background:${ok?'rgba(60,180,120,0.15)':'rgba(220,120,60,0.15)'};color:${ok?'var(--accent)':'var(--warn)'}">`
+      +(ok?'✓ Session completed successfully':'⚠ Session ended incomplete'+(S.withdrawn?' — withdrawn by participant':''))+`</div>`;
+    const who=(S.name||S.code)?`<div class="blurb" style="margin-top:0">${esc(S.name||'')}${S.name&&S.code?' · ':''}${esc(S.code||'')}</div>`:'';
+    return banner+who+rows+`<div class="blurb" style="margin-top:14px">Saving automatically — no action needed.</div>`;
+  }
+  return '';
+}
+function namePanel(){
+  return `<div class="blurb" style="margin-top:0">Enter the participant's name. It's saved with the session, along with a short ID generated from it.</div>
+    <input type="text" id="name-input" placeholder="Full name" autocomplete="off" autocapitalize="words"
+      style="width:100%;padding:13px 14px;border-radius:13px;border:1px solid var(--card3);background:var(--card2);font-size:16px;color:var(--ink);margin-top:14px;">
+    <div class="btnrow" style="margin-top:16px"><button class="primary" id="name-continue" disabled>Continue</button></div>`;
+}
+function consentPanel(){
+  return `<div class="checklist">
+    <label><input type="checkbox" id="c1"><span>18 or older</span></label>
+    <label><input type="checkbox" id="c2"><span>Agrees to participate</span></label>
+    <label><input type="checkbox" id="c3"><span>Can withdraw anytime</span></label>
+  </div>
+  <div class="btnrow"><button class="primary" id="b-continue" disabled>Continue</button><button class="warn" id="b-withdraw">Withdraw</button></div>`;
+}
+function controlMarkup(p){
+  if(p.control==='hold') return `<div class="btnrow holdrow"><button class="hold" id="hold-left">◀</button><button class="hold" id="hold-right">▶</button></div>`;
+  if(p.control==='drag') return `<div class="dragstrip" id="dragstrip"><div class="draghandle" id="draghandle">↔</div></div><div class="draghint">drag left / right to steer</div>`;
+  if(p.control==='tap') return `<div class="btnrow holdrow"><button class="hold" id="tap-left">Nudge ◀</button><button class="hold" id="tap-right">Nudge ▶</button></div>`;
+  return '';
+}
+function timerPanel(step, st){
+  const remaining = st.remaining!=null ? st.remaining : step.dur;
+  const p = step.profile ? PROFILES[step.profile] : null;
+  return `
+    ${step.profile ? `<div class="trackwrap" id="trackwrap"><canvas id="track-canvas" height="90"></canvas></div>
+      <div class="zonebar"><span id="zone-stat">in zone —</span><span id="bump-stat">0 bumps</span></div>
+      ${controlMarkup(p)}
+      ${p.load ? `<div class="splittask" id="splitcard"><div class="split-q" id="sp-q">–</div><div class="btnrow" style="margin:0"><button class="small" id="sp-a0">–</button><button class="small" id="sp-a1">–</button></div><span class="split-score" id="sp-score">0/0</span></div>` : ''}` : ''}
+    <div class="timerbig" id="t-display">${fmtClock(remaining)}</div>
+    <div class="timertarget">runs automatically — no pause, no skip</div>`;
+}
+function kssPanel(){
+  return `<div class="blurb" style="margin-top:0">Drag the slider to match how you feel right now.</div>
+    <div class="kssdisplay"><span class="kssnum" id="kss-num">–</span></div>
+    <div class="kssdesc" id="kss-desc">Move the slider to rate your sleepiness</div>
+    <input type="range" class="kssrange" id="kss-slider" min="1" max="9" step="1" value="5">
+    <div class="scalehint"><span>alert</span><span>sleepy</span></div>
+    <div class="btnrow"><button class="primary" id="b-kss-confirm" disabled>Confirm</button></div>`;
+}
+function pvtPanel(){
+  return `<div class="pvtstats">
+      <div>Trials<b id="pvt-n">0</b></div><div>Median RT<b id="pvt-med">—</b></div>
+      <div>Lapses<b id="pvt-lap">0</b></div><div>False starts<b id="pvt-fs">0</b></div>
+    </div>
+    <div class="flash" id="pvt-flash">Get ready…</div>`;
+}
+function vigilPanel(step){
+  return `<div class="blurb" style="margin-top:0">No tracking here — just watch, and tap the circle the moment it lights up. The tedium itself is what builds fatigue.</div>
+    <div class="flash flash-circle" id="vg-flash">Get ready…</div>
+    <div class="pvtstats">
+      <div>Hits<b id="vg-hits">0</b></div><div>Misses<b id="vg-miss">0</b></div>
+      <div>False taps<b id="vg-fs">0</b></div><div>Time left<b id="vg-time">${fmtClock(step.dur)}</b></div>
+    </div>`;
+}
+
+/* ── Steady Hand / Bumpy Road / Split Focus engine ──────────── */
+function drawDot(canvas, e){
+  if(!canvas) return;
+  const w=canvas.clientWidth||300, h=90;
+  if(canvas.width!==w) canvas.width=w;
+  if(canvas.height!==h) canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const midY=h/2;
+  const range=(w/2)-22;
+  const x=w/2 + (e/3)*range;
+  const off=Math.min(1, Math.abs(e)/2.2);
+  /* soft target ring at center, no line */
+  ctx.beginPath(); ctx.arc(w/2, midY, 22, 0, Math.PI*2);
+  ctx.strokeStyle=cssvar('--card3'); ctx.lineWidth=6; ctx.stroke();
+  /* dot color shifts from accent (centered) to warn (off) */
+  const c1=hexToRgb(cssvar('--accent')), c2=hexToRgb(cssvar('--warn'));
+  const mix=c1.map((v,idx)=>Math.round(v+(c2[idx]-v)*off));
+  const radius=13+off*3;
+  ctx.beginPath(); ctx.arc(x, midY, radius, 0, Math.PI*2);
+  ctx.fillStyle='rgb('+mix.join(',')+')'; ctx.fill();
+}
+function hexToRgb(hex){
+  hex=(hex||'#2c6e68').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const n=parseInt(hex,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+function ensureEngineBoundTo(i, step, st){
+  if(!engineRuntime[i]){
+    const p=PROFILES[step.profile];
+    engineRuntime[i]={e:0, elapsed:0, nextPert:p.pertMin+Math.random()*(p.pertMax-p.pertMin), samples:[], bumps:[], inZone:0};
+  }
+  drawDot(document.getElementById('track-canvas'), engineRuntime[i].e);
+  if(st.running){
+    if(engineInterval) clearInterval(engineInterval);
+    engineInterval=setInterval(()=>tickEngine(i, step), 50);
+    if(PROFILES[step.profile].load) startSplit();
+  } else {
+    if(engineInterval){ clearInterval(engineInterval); engineInterval=null; }
+    stopSplit();
+    holdDir={left:false, right:false}; dragValue=0;
+  }
+}
+function tickEngine(i, step){
+  const rt=engineRuntime[i]; if(!rt) return;
+  const p=PROFILES[step.profile], dt=0.05;
+  const n=(Math.random()+Math.random()+Math.random()-1.5);
+  rt.e += n*p.noiseSD;
+  if(p.road) rt.e += (Math.random()-0.5)*p.roadExtra;
+  if(p.control==='hold'){
+    if(holdDir.left) rt.e -= p.corrRate*dt;
+    if(holdDir.right) rt.e += p.corrRate*dt;
+  } else if(p.control==='drag'){
+    rt.e += dragValue*p.corrRate*dt;
+  }
+  if(p.pert){
+    rt.nextPert -= dt;
+    if(rt.nextPert<=0){
+      const sgn=Math.random()<0.5?-1:1; rt.e+=sgn*p.pertAmt; rt.bumps.push(rt.elapsed);
+      rt.nextPert=p.pertMin+Math.random()*(p.pertMax-p.pertMin);
+      buzz(40);
+      const bs=document.getElementById('bump-stat'); if(bs) bs.textContent=rt.bumps.length+' bump'+(rt.bumps.length===1?'':'s');
+    }
+  }
+  rt.e=Math.max(-3, Math.min(3, rt.e));
+  rt.elapsed+=dt;
+  rt.samples.push(rt.e);
+  if(Math.abs(rt.e)<0.5) rt.inZone=(rt.inZone||0)+1;
+  drawDot(document.getElementById('track-canvas'), rt.e);
+  if(rt.samples.length%10===0){
+    const zs=document.getElementById('zone-stat');
+    if(zs) zs.textContent='in zone '+Math.round(((rt.inZone||0)/rt.samples.length)*100)+'%';
+  }
+  if(p.road){
+    const wrap=document.getElementById('trackwrap');
+    if(wrap) wrap.style.transform='translate('+((Math.random()-0.5)*7).toFixed(1)+'px,'+((Math.random()-0.5)*4).toFixed(1)+'px)';
+  }
+}
+function finalizeEngine(i){
+  const rt=engineRuntime[i]; if(!rt || !rt.samples.length) return null;
+  const n=rt.samples.length, mean=rt.samples.reduce((a,b)=>a+b,0)/n;
+  let ss=0; rt.samples.forEach(v=>ss+=(v-mean)*(v-mean));
+  /* Raw error trace, downsampled from the 20Hz tick rate to ~2Hz (one point
+     every 0.5s) — enough to see drift within the block over time, without
+     bloating the saved file with the full-resolution signal. SDLP above is
+     still computed from the full-resolution samples, not this trace. */
+  const DOWNSAMPLE=10;
+  const trace=[];
+  for(let k=0;k<rt.samples.length;k+=DOWNSAMPLE) trace.push(+rt.samples[k].toFixed(3));
+  return {sdlp:+Math.sqrt(ss/n).toFixed(3), pertCount:rt.bumps.length, samplesN:n,
+    traceHz:+(1/(0.05*DOWNSAMPLE)).toFixed(2), trace, bumpTimesS:rt.bumps.map(t=>+t.toFixed(2))};
+}
+function stopEngineFor(i){
+  if(engineInterval){ clearInterval(engineInterval); engineInterval=null; }
+  stopSplit();
+  holdDir={left:false, right:false}; dragValue=0;
+  delete engineRuntime[i];
+}
+function pauseCurrentEngine(){
+  const i=S.current, step=STEPS[i];
+  if(step && step.profile){
+    const st=S.steps[i];
+    if(st.running){ st.running=false; save(); }
+    if(engineInterval){ clearInterval(engineInterval); engineInterval=null; }
+    stopSplit();
+    holdDir={left:false, right:false}; dragValue=0;
+  }
+}
+/* Split Focus: simple arithmetic answered while still holding the tracking buttons */
+function startSplit(){
+  stopSplit();
+  let hits=0, total=0, correctIsA0=true, answer=0;
+  const qEl=document.getElementById('sp-q'), a0=document.getElementById('sp-a0'), a1=document.getElementById('sp-a1'), scoreEl=document.getElementById('sp-score');
+  function next(){
+    const x=1+Math.floor(Math.random()*9), y=1+Math.floor(Math.random()*9);
+    const op=Math.random()<0.5?'+':'−';
+    answer = op==='+' ? x+y : x-y;
+    if(qEl) qEl.textContent=x+' '+op+' '+y;
+    const wrong = answer + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*3));
+    correctIsA0 = Math.random()<0.5;
+    if(a0) a0.textContent = correctIsA0?answer:wrong;
+    if(a1) a1.textContent = correctIsA0?wrong:answer;
+  }
+  function pick(isA0){
+    const correct=(isA0 && correctIsA0)||(!isA0 && !correctIsA0);
+    total++; if(correct) hits++;
+    if(scoreEl) scoreEl.textContent=hits+'/'+total;
+    const card=document.getElementById('splitcard');
+    if(card){ card.classList.remove('flash-ok','flash-bad'); void card.offsetWidth; card.classList.add(correct?'flash-ok':'flash-bad'); }
+    buzz(correct?20:60);
+    next();
+  }
+  if(a0) a0.onclick=()=>pick(true);
+  if(a1) a1.onclick=()=>pick(false);
+  next(); splitInterval=setInterval(next,4000);
+}
+function stopSplit(){ if(splitInterval){ clearInterval(splitInterval); splitInterval=null; } }
+
+/* Long Watch: slow, monotonous vigilance task — no tracking */
+function wireVigil(i, st, step){
+  if(st.status==='done') return;
+  const state={running:false, hits:0, misses:0, falseTaps:0, streak:0, best:0, armed:false, armedAt:0, timeoutId:null, missTimer:null, deadline:0, endCheck:null, responses:[]};
+  const flash=document.getElementById('vg-flash');
+  const stepStart=performance.now();
+  function stats(){
+    document.getElementById('vg-hits').textContent=state.hits;
+    document.getElementById('vg-miss').textContent=state.misses;
+    document.getElementById('vg-fs').textContent=state.falseTaps;
+  }
+  function armNext(){
+    if(performance.now()>=state.deadline) return;
+    flash.className='flash watching'; flash.textContent='Watching…'+(state.best?' · best streak '+state.best:'');
+    const isi=6000+Math.random()*8000;
+    state.timeoutId=setTimeout(()=>{
+      if(performance.now()>=state.deadline) return;
+      flash.className='flash go'; flash.textContent='TAP'; state.armed=true; state.armedAt=performance.now();
+      state.missTimer=setTimeout(()=>{
+        if(state.armed){
+          state.armed=false; state.streak=0; state.misses++; stats(); buzz(80);
+          state.responses.push({type:'miss', t:Math.round(performance.now()-stepStart)});
+          flash.className='flash'; flash.textContent='Missed'; armNext();
+        }
+      },1500);
+    }, isi);
+  }
+  flash.onclick=()=>{
+    if(!state.running) return;
+    if(state.armed){
+      const rt=Math.round(performance.now()-state.armedAt);
+      state.armed=false; clearTimeout(state.missTimer); state.hits++; state.streak++;
+      state.best=Math.max(state.best, state.streak); stats(); buzz(25);
+      state.responses.push({type:'hit', rt, t:Math.round(performance.now()-stepStart)});
+      flash.className='flash hit'; flash.textContent='Hit! streak '+state.streak;
+      setTimeout(armNext, 500);
+    } else {
+      state.falseTaps++; state.streak=0; stats();
+      state.responses.push({type:'falseTap', t:Math.round(performance.now()-stepStart)});
+    }
+  };
+  function finish(){
+    if(state.endCheck) clearInterval(state.endCheck);
+    clearTimeout(state.timeoutId); clearTimeout(state.missTimer);
+    state.running=false;
+    st.value={hits:state.hits, misses:state.misses, falseTaps:state.falseTaps, bestStreak:state.best, responses:state.responses};
+    log(step.title+' finished — '+state.hits+' hit(s), '+state.misses+' miss(es), best streak '+state.best);
+    completeStep(i);
+  }
+  state.running=true; state.deadline=performance.now()+step.dur*1000;
+  if(!st.startedAt) st.startedAt=nowISO();
+  log(step.title+' started'); armNext();
+  state.endCheck=setInterval(()=>{
+    const remain=Math.max(0,(state.deadline-performance.now())/1000);
+    const timeEl=document.getElementById('vg-time'); if(timeEl) timeEl.textContent=fmtClock(remain);
+    if(remain<=0) finish();
+  },1000);
+  skipCurrentStepFn=finish;
+}
+
+function wirePanel(step, st, i){
+  if(step.t==='name'){
+    const inp=document.getElementById('name-input'), btn=document.getElementById('name-continue');
+    inp.oninput=()=>{ btn.disabled = !inp.value.trim(); };
+    inp.focus();
+    btn.onclick=()=>{
+      const name = inp.value.trim();
+      const id = anonymizeName(name);
+      S.name=name; S.code=id;
+      S.startedAt=S.startedAt||nowISO();
+      log('Session started — '+name+' ('+id+')');
+      save(); startTicker(); completeStep(i);
+    };
+    skipCurrentStepFn=()=>{
+      const name = inp.value.trim() || ('Test participant '+i);
+      const id = anonymizeName(name+'-'+Date.now());
+      S.name=name; S.code=id; S.startedAt=S.startedAt||nowISO();
+      log('Session started — '+name+' ('+id+', skipped, test mode)');
+      save(); startTicker(); completeStep(i);
+    };
+  }
+
+  if(step.t==='action' && step.title==='Finish Session') finalizeSessionOnce(i);
+  if(step.t==='consent'){
+    const boxes=['c1','c2','c3'].map(id=>document.getElementById(id));
+    const cont=document.getElementById('b-continue');
+    boxes.forEach(b=>b.onchange=()=>{ cont.disabled=!boxes.every(x=>x.checked); });
+    cont.onclick=()=>{ log('Consent confirmed'); completeStep(i); };
+    skipCurrentStepFn=()=>{ log('Consent skipped (test mode)'); completeStep(i); };
+    document.getElementById('b-withdraw').onclick=()=>{
+      openModal('<h3>Withdraw?</h3><p>Ends the session now.</p><div class="btnrow"><button class="warn" id="m-yes">Withdraw</button><button class="ghost" id="m-no">Cancel</button></div>');
+      document.getElementById('m-no').onclick=closeModal;
+      document.getElementById('m-yes').onclick=()=>{
+        S.withdrawn=true;
+        log('Withdrew at consent — session ending');
+        closeModal();
+        jumpToFinish();
+      };
+    };
+  }
+  if(step.t==='timer'){
+    if(st.remaining==null) st.remaining=step.dur;
+    if(!st.running){
+      st.running=true;
+      if(!st.startedAt) st.startedAt=nowISO();
+      log(step.title+' started');
+      save();
+    }
+    skipCurrentStepFn=()=>{ st.running=false; log(step.title+' skipped (test mode)'); completeStep(i); };
+    if(step.profile){
+      const p=PROFILES[step.profile];
+      if(p.control==='hold'){
+        const bL=document.getElementById('hold-left'), bR=document.getElementById('hold-right');
+        const down=d=>e=>{ e.preventDefault(); holdDir[d]=true; };
+        const up=d=>()=>{ holdDir[d]=false; };
+        ['pointerdown','touchstart'].forEach(ev=>bL.addEventListener(ev, down('left'), {passive:false}));
+        ['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>bL.addEventListener(ev, up('left')));
+        ['pointerdown','touchstart'].forEach(ev=>bR.addEventListener(ev, down('right'), {passive:false}));
+        ['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>bR.addEventListener(ev, up('right')));
+      } else if(p.control==='drag'){
+        const strip=document.getElementById('dragstrip'), handle=document.getElementById('draghandle');
+        let dragging=false;
+        const setFromX=x=>{
+          const rect=strip.getBoundingClientRect();
+          const rel=Math.max(0, Math.min(1, (x-rect.left)/rect.width));
+          dragValue=(rel-0.5)*2;
+          handle.style.left=(rel*100)+'%';
+        };
+        strip.addEventListener('pointerdown', e=>{ dragging=true; strip.setPointerCapture(e.pointerId); setFromX(e.clientX); });
+        strip.addEventListener('pointermove', e=>{ if(dragging) setFromX(e.clientX); });
+        ['pointerup','pointercancel','pointerleave'].forEach(ev=>strip.addEventListener(ev, ()=>{ dragging=false; dragValue=0; handle.style.left='50%'; }));
+      } else if(p.control==='tap'){
+        const tl=document.getElementById('tap-left'), tr=document.getElementById('tap-right');
+        const nudge=dir=>{
+          const rt=engineRuntime[i]; if(!rt) return;
+          rt.e=Math.max(-3, Math.min(3, rt.e + dir*p.nudge));
+          buzz(15);
+          drawDot(document.getElementById('track-canvas'), rt.e);
+        };
+        tl.onclick=()=>nudge(-1);
+        tr.onclick=()=>nudge(1);
+      }
+    }
+  }
+  if(step.t==='kss'){
+    const slider=document.getElementById('kss-slider'), numEl=document.getElementById('kss-num'),
+      descEl=document.getElementById('kss-desc'), confirmBtn=document.getElementById('b-kss-confirm');
+    slider.oninput=()=>{
+      const v=parseInt(slider.value,10);
+      numEl.textContent=v;
+      descEl.textContent=KSS_LABELS[v-1];
+      confirmBtn.disabled=false;
+    };
+    confirmBtn.onclick=()=>{
+      const v=parseInt(slider.value,10);
+      st.value=v; log('KSS '+v); completeStep(i);
+    };
+    skipCurrentStepFn=()=>{
+      const v=parseInt(slider.value,10)||5;
+      st.value=v; log('KSS '+v+' (skipped, test mode)'); completeStep(i);
+    };
+  }
+  if(step.t==='pvt') wirePVT(i, st);
+  if(step.t==='vigil') wireVigil(i, st, step);
+}
+
+function finalizeSessionOnce(i){
+  if(S.finalized) return;
+  S.finalized=true;
+  S.completedSuccessfully=sessionCompletedSuccessfully();
+  log('Session '+(S.completedSuccessfully?'completed successfully':'ended incomplete')+(S.code?' — '+S.code:''));
+  completeStep(i);
+  saveSessionData(); showDoneModal();
+}
+function completeStep(i){
+  const step=STEPS[i], st=S.steps[i];
+  if(step.profile){
+    const summary=finalizeEngine(i);
+    if(summary) st.value=summary;
+    stopEngineFor(i);
+  }
+  st.status='done'; st.endedAt=nowISO(); if(!st.startedAt) st.startedAt=st.endedAt;
+  if(i+1<S.steps.length){ S.current=i+1; S.steps[i+1].status='current'; } else { S.current=S.steps.length; stopTicker(); }
+  save(); render();
+}
+
+function startTicker(){
+  if(tickHandle) return;
+  tickHandle=setInterval(()=>{
+    updateElapsed();
+    const i=S.current, step=STEPS[i], st=S.steps[i];
+    if(step && step.t==='timer' && st.running){
+      st.remaining=Math.max(0, st.remaining-1);
+      const disp=document.getElementById('t-display'); if(disp) disp.textContent=fmtClock(st.remaining);
+      if(st.remaining<=0){ st.running=false; try{ navigator.vibrate && navigator.vibrate(200); }catch(e){} log(step.title+' reached target'); completeStep(i); }
+      else save();
+    }
+  },1000);
+}
+function stopTicker(){ if(tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
+
+function wirePVT(i, st){
+  if(st.status==='done') return;
+  const state={running:false, trials:[], armed:false, waitingSince:0, timeoutId:null, deadline:0};
+  const flash=document.getElementById('pvt-flash');
+  const stepStart=performance.now();
+  function finish(){
+    state.running=false; clearTimeout(state.timeoutId);
+    const s=stats(); S.steps[i].value=s;
+    log('PVT finished — median '+(s.medianRT!=null?s.medianRT+'ms':'—')+', '+s.lapses+' lapse(s)');
+    completeStep(i);
+  }
+  function stats(){
+    const rts=state.trials.filter(t=>t.rt!=null).map(t=>t.rt).sort((a,b)=>a-b);
+    const med=rts.length?rts[Math.floor(rts.length/2)]:null;
+    const lapses=state.trials.filter(t=>t.rt!=null&&t.rt>500).length;
+    const fs=state.trials.filter(t=>t.falseStart).length;
+    document.getElementById('pvt-n').textContent=state.trials.length;
+    document.getElementById('pvt-med').textContent=med!=null?med+'ms':'—';
+    document.getElementById('pvt-lap').textContent=lapses;
+    document.getElementById('pvt-fs').textContent=fs;
+    return {medianRT:med, lapses, falseStarts:fs, n:state.trials.length, trials:state.trials.slice()};
+  }
+  function scheduleNext(){
+    flash.className='flash'; flash.textContent='Wait…';
+    const isi=2000+Math.random()*8000;
+    state.timeoutId=setTimeout(()=>{ flash.className='flash go'; flash.textContent='TAP'; state.waitingSince=performance.now(); state.armed=true; }, isi);
+  }
+  flash.onclick=()=>{
+    if(!state.running) return;
+    if(state.armed){
+      const rt=Math.round(performance.now()-state.waitingSince);
+      state.trials.push({rt, t:Math.round(performance.now()-stepStart)}); state.armed=false;
+      flash.className='flash'; flash.textContent=rt+' ms'; stats();
+      if(performance.now()<state.deadline) setTimeout(scheduleNext,400);
+    } else {
+      state.trials.push({rt:null, falseStart:true, t:Math.round(performance.now()-stepStart)});
+      flash.className='flash early'; flash.textContent='Early'; stats();
+      clearTimeout(state.timeoutId);
+      if(performance.now()<state.deadline) setTimeout(scheduleNext,600);
+    }
+  };
+  state.running=true; state.deadline=performance.now()+STEPS[i].dur*1000;
+  log('PVT started'); scheduleNext();
+  const endCheck=setInterval(()=>{ if(performance.now()>=state.deadline){ clearInterval(endCheck); clearTimeout(state.timeoutId); flash.className='flash'; flash.textContent='Done'; finish(); } },500);
+  skipCurrentStepFn=()=>{ clearInterval(endCheck); finish(); };
+}
+
+function renderDoneList(){
+  const host=document.getElementById('donelist');
+  const rows=STEPS.map((s,i)=>({s,st:S.steps[i],i})).filter(x=>x.st.status==='done');
+  if(!rows.length){ host.innerHTML=''; return; }
+  host.innerHTML=rows.slice().reverse().map(({s,st})=>{
+    const dur=st.startedAt&&st.endedAt?fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000):'—';
+    let extra=dur;
+    if(st.value && st.value.sdlp!=null) extra=dur+' · SDLP '+st.value.sdlp;
+    else if(st.value && st.value.medianRT!=null) extra=dur+' · '+st.value.medianRT+'ms';
+    else if(st.value && st.value.hits!=null) extra=dur+' · '+st.value.hits+' hit(s)';
+    return `<div class="dlrow"><span class="ck">✓</span><span class="nm">${esc(s.title)}</span><span class="du">${extra}</span></div>`;
+  }).join('');
+}
+function renderLog(){
+  const host=document.getElementById('log');
+  if(!S.log.length){ host.innerHTML='<div class="empty">Nothing logged yet.</div>'; return; }
+  host.innerHTML=S.log.slice().reverse().map(e=>{
+    const d=new Date(e.at);
+    const t=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+    return `<div class="logline"><span class="t">${t}</span><span>${esc(e.msg)}</span></div>`;
+  }).join('');
+}
+
+/* ── Demonstration ──────────────────────────────────────────
+   Three quick beats at the controls: baseline, road, load —
+   Figure 1 is not a picture; it is the judge. */
+const BEAT_S=18;
+let demoState=null;
+function initDemo(){ demoState={phase:'idle', beatIndex:-1, results:[], interval:null, e:0, nextPert:0, elapsed:0}; }
+function renderDemo(){
+  if(!demoState) initDemo();
+  const host=document.getElementById('otherview');
+  const beats=[{name:'Baseline', profile:'baseline'},{name:'Road', profile:'road'},{name:'Load', profile:'load'}];
+  if(demoState.phase==='idle'){
+    host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="d-back">←</button><h2>Demonstration</h2></div>
+      <div class="blurb">Three beats at the controls. Figure 1 is not a picture; it is the judge.</div>
+      <div class="btnrow"><button class="primary" id="d-start">Start</button></div>`;
+    document.getElementById('d-back').onclick=goMain;
+    document.getElementById('d-start').onclick=()=>startBeat(0, beats);
+    return;
+  }
+  if(demoState.phase==='running'){
+    const b=beats[demoState.beatIndex];
+    host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="d-back">←</button><h2>Demonstration</h2></div>
+      <div class="beatlabel">BEAT ${demoState.beatIndex+1} OF 3 · ${b.name.toUpperCase()}</div>
+      <div class="trackwrap"><canvas id="demo-canvas" height="90"></canvas></div>
+      <div class="btnrow holdrow"><button class="hold" id="dh-left">◀</button><button class="hold" id="dh-right">▶</button></div>
+      <div class="timerbig" id="d-display">${fmtClock(BEAT_S-demoState.elapsed)}</div>
+      <div class="btnrow"><button class="ghost" id="d-skip">Skip beat</button></div>`;
+    document.getElementById('d-back').onclick=goMain;
+    document.getElementById('d-skip').onclick=()=>finishBeat(beats);
+    const dhL=document.getElementById('dh-left'), dhR=document.getElementById('dh-right');
+    const down=d=>e=>{ e.preventDefault(); holdDir[d]=true; }, up=d=>()=>{ holdDir[d]=false; };
+    ['pointerdown','touchstart'].forEach(ev=>dhL.addEventListener(ev, down('left'), {passive:false}));
+    ['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>dhL.addEventListener(ev, up('left')));
+    ['pointerdown','touchstart'].forEach(ev=>dhR.addEventListener(ev, down('right'), {passive:false}));
+    ['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>dhR.addEventListener(ev, up('right')));
+    drawDot(document.getElementById('demo-canvas'), demoState.e);
+    return;
+  }
+  if(demoState.phase==='finished'){
+    host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="d-back">←</button><h2>Demonstration</h2></div>
+      <div class="trackwrap" style="padding:8px"><canvas id="fig-canvas" height="140"></canvas></div>
+      <div class="figlegend">
+        <span><i style="background:${cssvar('--c-block')}"></i>Baseline</span>
+        <span><i style="background:${cssvar('--c-probe')}"></i>Road</span>
+        <span><i style="background:${cssvar('--c-assess')}"></i>Load</span>
+      </div>
+      <div class="caption">Same wobble amplitude, different shape. Figure 1 is not a picture; it is the judge.</div>
+      <div class="btnrow" style="margin-top:14px"><button class="primary" id="d-again">Run again</button><button class="ghost" id="d-back2">Back</button></div>`;
+    document.getElementById('d-back').onclick=goMain;
+    document.getElementById('d-back2').onclick=goMain;
+    document.getElementById('d-again').onclick=()=>{ initDemo(); renderDemo(); };
+    drawFigure1(document.getElementById('fig-canvas'), demoState.results);
+    return;
+  }
+}
+function startBeat(idx, beats){
+  const p=PROFILES[beats[idx].profile];
+  demoState.phase='running'; demoState.beatIndex=idx; demoState.e=0; demoState.elapsed=0;
+  demoState.nextPert=p.pertMin+Math.random()*(p.pertMax-p.pertMin);
+  demoState.samples=[];
+  renderDemo();
+  demoState.interval=setInterval(()=>{
+    const dt=0.05;
+    const n=(Math.random()+Math.random()+Math.random()-1.5);
+    demoState.e += n*p.noiseSD;
+    if(p.road) demoState.e += (Math.random()-0.5)*p.roadExtra;
+    if(holdDir.left) demoState.e -= p.corrRate*dt;
+    if(holdDir.right) demoState.e += p.corrRate*dt;
+    if(p.pert){ demoState.nextPert-=dt; if(demoState.nextPert<=0){ const sgn=Math.random()<0.5?-1:1; demoState.e+=sgn*p.pertAmt; demoState.nextPert=p.pertMin+Math.random()*(p.pertMax-p.pertMin); } }
+    demoState.e=Math.max(-3,Math.min(3,demoState.e));
+    demoState.elapsed+=dt;
+    demoState.samples.push(demoState.e);
+    const disp=document.getElementById('d-display'); if(disp) disp.textContent=fmtClock(BEAT_S-demoState.elapsed);
+    drawDot(document.getElementById('demo-canvas'), demoState.e);
+    if(demoState.elapsed>=BEAT_S) finishBeat(beats);
+  },50);
+}
+function finishBeat(beats){
+  if(demoState.interval){ clearInterval(demoState.interval); demoState.interval=null; }
+  const samples=demoState.samples||[];
+  const step=Math.max(1, Math.floor(samples.length/140));
+  const trace=[]; for(let k=0;k<samples.length;k+=step) trace.push(samples[k]);
+  demoState.results.push({name:beats[demoState.beatIndex].name, trace});
+  if(demoState.beatIndex+1<beats.length) startBeat(demoState.beatIndex+1, beats);
+  else { demoState.phase='finished'; renderDemo(); }
+}
+function drawFigure1(canvas, results){
+  if(!canvas || !results.length) return;
+  const w=canvas.clientWidth||300, h=140;
+  canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const colors={Baseline:cssvar('--c-block'), Road:cssvar('--c-probe'), Load:cssvar('--c-assess')};
+  ctx.strokeStyle=cssvar('--card3'); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  results.forEach(r=>{
+    if(!r.trace.length) return;
+    ctx.beginPath(); ctx.strokeStyle=colors[r.name]||'#888'; ctx.lineWidth=2;
+    r.trace.forEach((v,idx)=>{
+      const x=(idx/(r.trace.length-1))*w, y=h/2 - (v/3)*(h/2-10);
+      idx===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+}
+
+/* ── Trace: analyze previous records (this console's .json, or the
+   original desktop app's summary.csv / windows.csv) ───────────── */
+let analyzeData=[];   // per-block SDLP rows, from .json or summary.csv
+let traceSeries=[];   // induction time-series, from windows.csv
+function loadAnalyzeData(){
+  try{ const raw=localStorage.getItem('sh_analyze_v1'); if(raw) analyzeData=JSON.parse(raw); }catch(e){ analyzeData=[]; }
+  try{ const raw2=localStorage.getItem('sh_trace_v1'); if(raw2) traceSeries=JSON.parse(raw2); }catch(e){ traceSeries=[]; }
+}
+function saveAnalyzeData(){
+  try{ localStorage.setItem('sh_analyze_v1', JSON.stringify(analyzeData)); }catch(e){}
+  try{ localStorage.setItem('sh_trace_v1', JSON.stringify(traceSeries)); }catch(e){}
+}
+function condName(title){
+  if(title==='Baseline'||title==='Fatigued Baseline') return 'Baseline';
+  if(title==='Bumpy Road'||title==='Fatigued Bumpy Road') return 'Road (bumpy)';
+  if(title==='Un-Paved Road'||title==='Fatigued Un-Paved Road') return 'Road (unpaved)';
+  if(title==='Cognitive Load') return 'Load';
+  return null;
+}
+/* the original desktop app's condition codes (CONDS in that build) */
+const CSV_COND = {BASE:['Baseline','pre'], ROAD:['Road','pre'], LOAD:['Load','pre'],
+  BASE_L:['Baseline','post'], ROAD_L:['Road','post']};
+
+function parseSessionIntoAnalyze(rec){
+  if(!rec || !Array.isArray(rec.steps) || rec.steps.length!==STEPS.length) return 0;
+  let added=0;
+  STEPS.forEach((step,idx)=>{
+    const st=rec.steps[idx];
+    const c=condName(step.title);
+    if(c && st && st.value && st.value.sdlp!=null){
+      analyzeData.push({code:rec.code||'—', condition:c, phase:step.title.startsWith('Fatigued')?'post':'pre', sdlp:st.value.sdlp});
+      added++;
+    }
+  });
+  return added;
+}
+/* minimal quoted-CSV line splitter */
+function splitCSVLine(line){
+  const out=[]; let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(inQ){ if(c==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else inQ=false; } else cur+=c; }
+    else { if(c==='"') inQ=true; else if(c===','){ out.push(cur); cur=''; } else cur+=c; }
+  }
+  out.push(cur); return out;
+}
+function parseCSVRows(text){
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.length);
+  if(lines.length<2) return {header:[], rows:[]};
+  const header=splitCSVLine(lines[0]);
+  const rows=lines.slice(1).map(l=>{
+    const cells=splitCSVLine(l), o={};
+    header.forEach((h,i)=>o[h]=cells[i]);
+    return o;
+  });
+  return {header, rows};
+}
+/* returns {addedRows, addedTrace} */
+function parseCSVIntoAnalyze(text){
+  const trimmed=text.trim();
+  if(trimmed==='no induction recorded') return {addedRows:0, addedTrace:0, note:'That file recorded no induction — nothing to trace.'};
+  const {header, rows}=parseCSVRows(text);
+  let addedRows=0, addedTrace=0;
+  if(header.includes('sdlp_premise')){
+    rows.forEach(r=>{
+      const map=CSV_COND[r.condition];
+      const sdlp=parseFloat(r.sdlp_premise);
+      if(map && isFinite(sdlp)){ analyzeData.push({code:r.participant||'—', condition:map[0], phase:map[1], sdlp}); addedRows++; }
+    });
+  } else if(header.includes('window_type')){
+    const byCode={};
+    rows.filter(r=>r.window_type==='1min').forEach(r=>{
+      const t=parseFloat(r.t_start_s), v=parseFloat(r.sdlp);
+      if(!isFinite(t)||!isFinite(v)) return;
+      const code=r.participant||'—';
+      (byCode[code]=byCode[code]||[]).push({t, sdlp:v});
+    });
+    Object.keys(byCode).forEach(code=>{
+      traceSeries.push({code, points:byCode[code].sort((a,b)=>a.t-b.t)});
+      addedTrace++;
+    });
+  }
+  return {addedRows, addedTrace};
+}
+function drawTraceChart(canvas, series){
+  const w=canvas.clientWidth||300, h=140;
+  canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const allPts=series.flatMap(s=>s.points);
+  if(!allPts.length) return;
+  const maxT=Math.max(...allPts.map(p=>p.t)), maxV=Math.max(0.05, ...allPts.map(p=>p.sdlp));
+  const palette=[cssvar('--c-block'), cssvar('--c-probe'), cssvar('--c-assess'), cssvar('--c-break'), cssvar('--c-flow')];
+  ctx.strokeStyle=cssvar('--card3'); ctx.beginPath(); ctx.moveTo(0,h-10); ctx.lineTo(w,h-10); ctx.stroke();
+  series.forEach((s,si)=>{
+    if(!s.points.length) return;
+    ctx.beginPath(); ctx.strokeStyle=palette[si%palette.length]; ctx.lineWidth=2;
+    s.points.forEach((p,idx)=>{
+      const x=(p.t/maxT)*w, y=(h-14) - (p.sdlp/maxV)*(h-24);
+      idx===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+}
+function renderAnalyze(){
+  loadAnalyzeData();
+  const host=document.getElementById('otherview');
+  const summary=['Baseline','Road','Load'].map(c=>{
+    const pre=analyzeData.filter(d=>d.condition===c&&d.phase==='pre').map(d=>d.sdlp);
+    const post=analyzeData.filter(d=>d.condition===c&&d.phase==='post').map(d=>d.sdlp);
+    const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+    return {c, pre:avg(pre), post:avg(post), preN:pre.length, postN:post.length};
+  });
+  const maxVal=Math.max(0.05, ...summary.flatMap(s=>[s.pre,s.post]).filter(v=>v!=null));
+  const colorFor={Baseline:cssvar('--c-block'), Road:cssvar('--c-probe'), Load:cssvar('--c-assess')};
+  const bars=summary.map(s=>`
+    <div class="barrow"><div class="lbl"><span>${s.c} · alert${s.preN?' ('+s.preN+')':''}</span><span>${s.pre!=null?s.pre.toFixed(3):'—'}</span></div>
+      <div class="bartrack"><div class="barfill" style="width:${s.pre!=null?(s.pre/maxVal*100):0}%; background:${colorFor[s.c]}"></div></div></div>
+    <div class="barrow"><div class="lbl"><span>${s.c} · fatigued${s.postN?' ('+s.postN+')':''}</span><span>${s.post!=null?s.post.toFixed(3):'—'}</span></div>
+      <div class="bartrack"><div class="barfill" style="width:${s.post!=null?(s.post/maxVal*100):0}%; background:${colorFor[s.c]}; opacity:.55"></div></div></div>`).join('');
+  const rows=analyzeData.map(d=>`<tr><td>${esc(d.code)}</td><td>${d.condition}</td><td>${d.phase==='post'?'fatigued':'alert'}</td><td>${d.sdlp}</td></tr>`).join('');
+  const traceLegend=traceSeries.map((s,i)=>{
+    const palette=['--c-block','--c-probe','--c-assess','--c-break','--c-flow'];
+    return `<span><i style="background:${cssvar(palette[i%palette.length])}"></i>${esc(s.code)}</span>`;
+  }).join('');
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="a-back">←</button><h2>Trace</h2></div>
+    <div class="blurb">Load session files — this console's .json, or the desktop app's summary.csv / windows.csv — to see the actual wobble trace and compare conditions.</div>
+    <div class="btnrow" style="margin-bottom:16px"><button class="primary" id="a-load">Load files</button><button class="ghost" id="a-clear">Clear</button></div>
+    ${traceSeries.length?`<div class="barcard"><h3>Induction SDLP trace (1-min windows)</h3>
+      <div class="trackwrap" style="padding:8px"><canvas id="trace-canvas" height="140"></canvas></div>
+      <div class="figlegend">${traceLegend}</div></div>`:''}
+    <div class="barcard"><h3>Average SDLP by condition</h3>${analyzeData.length?bars:'<div class="empty">No records loaded yet.</div>'}</div>
+    ${analyzeData.length?`<div class="barcard"><h3>Records</h3><div class="tablewrap"><table><thead><tr><th>Code</th><th>Condition</th><th>Phase</th><th>SDLP</th></tr></thead><tbody>${rows}</tbody></table></div></div>`:''}`;
+  document.getElementById('a-back').onclick=goMain;
+  document.getElementById('a-clear').onclick=()=>{ analyzeData=[]; traceSeries=[]; saveAnalyzeData(); renderAnalyze(); };
+  document.getElementById('a-load').onclick=()=>document.getElementById('analyze-file').click();
+  if(traceSeries.length) drawTraceChart(document.getElementById('trace-canvas'), traceSeries);
+}
+
+/* ── modal + menu ───────────────────────────────────────────── */
+function openModal(html){ document.getElementById('modal-card').innerHTML=html; document.getElementById('modal').hidden=false; }
+function closeModal(){ document.getElementById('modal').hidden=true; }
+function sessionActiveAndWithdrawable(){
+  const finishIdx=STEPS.length-1;
+  return !!S.startedAt && S.current<finishIdx && S.steps[finishIdx].status!=='done' && !S.finalized;
+}
+function openMenu(){
+  const canWithdraw=sessionActiveAndWithdrawable();
+  openModal(`<h3>Menu</h3><div class="sheetlist">
+    ${canWithdraw?`<button class="warn" id="mn-withdraw">✕ Withdraw from session</button>`:''}
+    <button id="mn-export">⬇ Save session file</button>
+    <button id="mn-import">⬆ Load session file</button>
+    <button id="mn-demo">▶ Demonstration</button>
+    <button id="mn-analyze">▤ Trace</button>
+    <button id="mn-testmode">🧪 Testing mode — skip steps: ${testMode?'ON':'OFF'}</button>
+    <button class="warn" id="mn-reset">↺ Reset session</button>
+  </div>`);
+  if(canWithdraw) document.getElementById('mn-withdraw').onclick=()=>{
+    closeModal();
+    openModal('<h3>Withdraw?</h3><p>Ends the session now — the participant may withdraw at any time.</p><div class="btnrow"><button class="warn" id="m-yes">Withdraw</button><button class="ghost" id="m-no">Cancel</button></div>');
+    document.getElementById('m-no').onclick=closeModal;
+    document.getElementById('m-yes').onclick=()=>{
+      S.withdrawn=true;
+      log('Withdrew mid-session — session ending');
+      closeModal();
+      jumpToFinish();
+    };
+  };
+  document.getElementById('mn-export').onclick=()=>{ closeModal(); exportSession(); };
+  document.getElementById('mn-import').onclick=()=>{ closeModal(); document.getElementById('import-file').click(); };
+  document.getElementById('mn-testmode').onclick=()=>{
+    setTestMode(!testMode);
+    log('Testing mode '+(testMode?'enabled':'disabled')+' — skip is '+(testMode?'now available on each step':'hidden again'));
+    closeModal(); renderApp();
+  };
+  document.getElementById('mn-demo').onclick=()=>{ closeModal(); pauseCurrentEngine(); initDemo(); uiView='demo'; renderApp(); };
+  document.getElementById('mn-analyze').onclick=()=>{ closeModal(); pauseCurrentEngine(); uiView='analyze'; renderApp(); };
+  document.getElementById('mn-reset').onclick=()=>{ closeModal(); confirmReset(); };
+}
+function confirmReset(){
+  openModal('<h3>Reset session?</h3><p>Clears all progress on this device. Save a copy first if you need it.</p><div class="btnrow"><button class="ghost" id="m-save">Save first</button><button class="warn" id="m-yes">Reset</button></div>');
+  document.getElementById('m-save').onclick=()=>{ exportSession(); };
+  document.getElementById('m-yes').onclick=()=>{
+    stopTicker(); pauseCurrentEngine();
+    S={code:'', name:'', current:0, startedAt:null, withdrawn:false, finalized:false, completedSuccessfully:null, steps: STEPS.map(()=>({status:'locked', startedAt:null, endedAt:null, value:null})), log:[]};
+    S.steps[0].status='current'; save(); closeModal(); renderApp();
+  };
+}
+function showDoneModal(){
+  const ok=S.completedSuccessfully;
+  const title=ok?'Session complete':'Session incomplete';
+  const status=ok?'All steps finished successfully.':'The session ended before all steps were completed'+(S.withdrawn?' (withdrawn by the participant).':'.');
+  openModal('<h3>'+title+'</h3><p>'+status+(S.name?' — '+esc(S.name):'')+(S.code?' ('+esc(S.code)+')':'')+' The data has been saved automatically — nothing more to do.</p><div class="btnrow"><button class="primary" id="m-ok">Close</button></div>');
+  document.getElementById('m-ok').onclick=closeModal;
+}
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+document.getElementById('menu-btn').onclick=openMenu;
+document.getElementById('import-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader(); reader.onload=()=>importSessionFromText(reader.result); reader.readAsText(f); e.target.value='';
+};
+document.getElementById('analyze-file').onchange=e=>{
+  const files=Array.from(e.target.files||[]);
+  let done=0;
+  if(!files.length) return;
+  files.forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const isCSV = /\.csv$/i.test(f.name) || (f.type||'').includes('csv');
+      try{
+        if(isCSV) parseCSVIntoAnalyze(reader.result);
+        else parseSessionIntoAnalyze(JSON.parse(reader.result));
+      }catch(err){}
+      done++;
+      if(done===files.length){ saveAnalyzeData(); renderAnalyze(); }
+    };
+    reader.readAsText(f);
+  });
+  e.target.value='';
+};
+
+load();
+if(S.steps[S.current] && S.steps[S.current].status==='locked') S.steps[S.current].status='current';
+if(S.startedAt) startTicker();
+renderApp();
+</script>
+</body>
+</html>
