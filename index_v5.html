@@ -1,0 +1,2959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steady Hands · Study 2 Session Runner v4</title>
+<style>
+:root{
+  --bg:#f6f7f4; --card:#ffffff; --card2:#f0f2ed; --card3:#e6e9e0; --ink:#1c211d; --ink2:#5c665c; --ink3:#94a091;
+  --accent:#2c6e68; --accent-tint:#e3f0ed; --warn:#b1503e; --warn-tint:#fbe8e3; --good:#2c6e68;
+  --c-block:#2c6e68; --c-block-tint:#e3f0ed;
+  --c-probe:#6d4f8a; --c-probe-tint:#efe7f5;
+  --c-assess:#a06a20; --c-assess-tint:#f6ead4;
+  --c-break:#3c7a4d; --c-break-tint:#e6f2e8;
+  --c-flow:#5c665c; --c-flow-tint:#eef0eb;
+  --shadow:0 1px 2px rgba(28,33,29,.04), 0 6px 16px rgba(28,33,29,.05);
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#f6f7f4; --card:#ffffff; --card2:#f0f2ed; --card3:#e6e9e0; --ink:#1c211d; --ink2:#5c665c; --ink3:#94a091;
+    --accent:#2c6e68; --accent-tint:#e3f0ed; --warn:#b1503e; --warn-tint:#fbe8e3;
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); -webkit-font-smoothing:antialiased;}
+.wrap{max-width:560px; margin:0 auto; padding:0 16px 40px;}
+
+header{position:sticky; top:0; z-index:20; background:var(--bg); padding-top:calc(env(safe-area-inset-top,0px) + 14px);}
+.hd-row{display:flex; align-items:center; gap:8px; padding:0 16px 14px; max-width:560px; margin:0 auto;}
+.hd-title{flex:1; min-width:0;}
+.hd-title h1{margin:0; font-size:18px; font-weight:700; line-height:1.2;}
+.hd-code{font-size:12px; color:var(--ink3); padding:2px 0; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hd-clock{text-align:right; font-family:var(--mono);}
+.hd-clock .n{font-size:20px; font-weight:600;}
+.hd-clock .l{font-size:9px; color:var(--ink3); letter-spacing:.06em;}
+.iconbtn{width:36px; height:36px; border-radius:50%; border:none; background:var(--card2);
+  color:var(--ink2); font-size:16px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; cursor:pointer;}
+
+.modebar{font-family:var(--mono); font-size:10.5px; letter-spacing:.04em; padding:6px 16px; margin:0 -16px 8px;
+  max-width:560px; text-align:center;}
+.modebar.study{background:var(--c-block-tint); color:var(--c-block);}
+.modebar.pilot{background:var(--c-assess-tint); color:var(--c-assess);}
+.modebar.test{background:var(--warn-tint); color:var(--warn);}
+
+.strip{display:flex; gap:6px; overflow-x:auto; padding:2px 16px 16px; margin:0 -16px; scrollbar-width:none;}
+.strip::-webkit-scrollbar{display:none;}
+.chip{flex:0 0 auto; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:11px; font-weight:600; background:var(--card2); color:var(--ink3); border:none;}
+.chip.done{background:var(--accent); color:#fff;}
+.chip.now{background:var(--card); color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset;}
+
+.now{background:var(--card); border-radius:20px; padding:20px; box-shadow:var(--shadow); margin-top:2px;}
+.now .tag{font-family:var(--mono); font-size:10px; letter-spacing:.04em; padding:3px 9px; border-radius:20px; display:inline-block;}
+.now .tag.steady{background:var(--c-block-tint); color:var(--c-block);}
+.now .tag.bumpy{background:var(--c-probe-tint); color:var(--c-probe);}
+.now .tag.split{background:var(--c-assess-tint); color:var(--c-assess);}
+.now .tag.watch{background:var(--c-break-tint); color:var(--c-break);}
+.now .tag.check{background:var(--c-flow-tint); color:var(--c-flow);}
+.now .tag.flow{background:var(--c-flow-tint); color:var(--c-flow);}
+.now h2{font-size:23px; margin:10px 0 2px; font-weight:700;}
+.now .sub{font-size:13.5px; color:var(--ink2); margin-bottom:14px;}
+
+.trackwrap{background:var(--card2); border-radius:16px; overflow:hidden; margin-bottom:10px;}
+canvas#track-canvas, canvas#demo-canvas, canvas#fig-canvas, canvas#trace-canvas{width:100%; display:block;}
+.zonebar{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--ink3); margin:-2px 2px 10px;}
+.holdrow{margin-bottom:12px; display:flex; gap:8px;}
+button.hold{font-size:24px; padding:18px; background:var(--card2); transition:transform .06s, background .06s; flex:1;}
+button.hold:active,button.hold.fired{background:var(--accent-tint); transform:scale(0.94);}
+button.nbk{font-size:15px; background:var(--c-assess-tint); color:var(--c-assess); flex:1.1;}
+button.nbk:active,button.nbk.fired{transform:scale(0.94);}
+.nbrow{display:flex; align-items:center; gap:10px; margin-bottom:12px; background:var(--card2); border-radius:14px; padding:10px 14px;}
+.nb-cue{font-family:var(--mono); font-size:13px; color:var(--ink3); flex:1;}
+.nb-score{font-family:var(--mono); font-size:12px; color:var(--ink3);}
+.nbrow.flash-ok{animation:flashOk .4s ease;}
+.nbrow.flash-bad{animation:flashBad .4s ease;}
+@keyframes flashOk{0%{background:var(--c-block-tint);} 100%{background:var(--card2);}}
+@keyframes flashBad{0%{background:var(--warn-tint);} 100%{background:var(--card2);}}
+
+.timerbig{font-family:var(--mono); font-size:42px; font-weight:600; text-align:center; margin:6px 0 2px; letter-spacing:.01em;}
+.timertarget{text-align:center; font-size:11.5px; color:var(--ink3); margin-bottom:6px;}
+.btnrow{display:flex; gap:8px; flex-wrap:wrap;}
+button{font-family:var(--sans); font-size:15px; font-weight:600; border-radius:13px; border:none;
+  background:var(--card2); color:var(--ink); padding:14px 16px; cursor:pointer; flex:1; min-height:50px;}
+button.primary{background:var(--accent); color:#fff;}
+button.warn{background:var(--warn-tint); color:var(--warn);}
+button.ghost{background:transparent; color:var(--ink2);}
+button:disabled{opacity:.35;}
+button.small{flex:0 0 auto; padding:11px 14px; min-height:44px; font-size:14px;}
+
+.kssdisplay{text-align:center; margin:14px 0 2px;}
+.kssnum{font-family:var(--mono); font-size:46px; font-weight:700; color:var(--c-assess);}
+.kssdesc{text-align:center; font-size:13px; color:var(--ink3); min-height:36px; margin:2px 0 14px; padding:0 10px;}
+.kssrange{-webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:4px; background:var(--card2); accent-color:var(--c-assess); margin:8px 0 4px;}
+.kssrange::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:30px; height:30px; border-radius:50%; background:var(--c-assess); cursor:pointer; border:3px solid var(--bg,#fff);}
+.kssrange::-moz-range-thumb{width:30px; height:30px; border-radius:50%; background:var(--c-assess); cursor:pointer; border:3px solid var(--bg,#fff);}
+.scalehint{display:flex; justify-content:space-between; font-size:11px; color:var(--ink3); margin-bottom:14px;}
+
+.checklist label{display:flex; gap:10px; align-items:flex-start; padding:9px 0; font-size:14px; line-height:1.35;}
+.checklist input{width:20px; height:20px; flex:0 0 auto; margin-top:1px;}
+
+.flash{height:120px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:16px; margin-bottom:14px; background:var(--card2); color:var(--ink3); transition:transform .15s;}
+.flash.go{background:var(--good); color:#fff; font-size:22px; animation:breathe 1s ease-in-out infinite;}
+.flash.early{background:var(--warn); color:#fff;}
+@keyframes breathe{0%,100%{opacity:.85; transform:scale(1);} 50%{opacity:1; transform:scale(1.03);}}
+.pvtstats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; font-family:var(--mono); font-size:11.5px;}
+.pvtstats div{background:var(--card2); border-radius:11px; padding:9px 11px; color:var(--ink3);}
+.pvtstats b{display:block; font-size:17px; margin-top:2px; color:var(--ink); font-family:var(--sans);}
+
+.sumrow{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; padding:8px 4px; border-radius:10px;}
+.sumrow:nth-child(odd){background:var(--card2);}
+.sumrow span:last-child{font-family:var(--mono); color:var(--ink2); text-align:right; flex:0 0 auto;}
+
+.donelist{margin-top:18px;}
+.dlrow{display:flex; align-items:center; gap:10px; padding:11px 10px; font-size:14px; border-radius:12px;}
+.dlrow:nth-child(odd){background:var(--card2);}
+.dlrow .ck{width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px;
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+.dlrow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.dlrow .du{font-family:var(--mono); font-size:11.5px; color:var(--ink3); text-align:right; flex:0 0 auto;}
+
+.logsec{margin-top:22px;}
+.logsec summary{font-size:12px; color:var(--ink3); letter-spacing:.03em; cursor:pointer; padding:4px 0;}
+.logline{font-family:var(--mono); font-size:11px; color:var(--ink2); padding:6px 10px; display:flex; gap:8px; border-radius:10px;}
+.logline:nth-child(odd){background:var(--card2);}
+.logline .t{color:var(--ink3); flex:0 0 auto;}
+.logline.dev{color:var(--warn);}
+.empty{font-size:12.5px; color:var(--ink3); padding:8px 0;}
+
+.screenhead{display:flex; align-items:center; gap:10px; margin:4px 0 14px;}
+.screenhead h2{font-size:20px; margin:0; flex:1;}
+.blurb{font-size:13.5px; color:var(--ink2); margin-bottom:16px; line-height:1.45;}
+.note{font-size:12.5px; color:var(--ink3); line-height:1.45; margin:10px 0 0;}
+
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:12px; color:var(--ink3); margin-bottom:5px; letter-spacing:.02em;}
+.field input, .field select{width:100%; padding:12px 13px; border-radius:12px; border:1px solid var(--card3);
+  background:var(--card2); font-size:16px; color:var(--ink); font-family:var(--sans);}
+.f2{display:flex; gap:8px;} .f2 .field{flex:1;}
+
+.barcard{background:var(--card); border-radius:16px; padding:16px; box-shadow:var(--shadow); margin-bottom:14px;}
+.barcard h3{font-size:14px; margin:0 0 12px;}
+.barrow{margin-bottom:10px;}
+.barrow .lbl{display:flex; justify-content:space-between; font-size:12px; color:var(--ink2); margin-bottom:4px;}
+.bartrack{background:var(--card2); border-radius:8px; height:14px; overflow:hidden;}
+.barfill{height:100%; border-radius:8px;}
+.tablewrap{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:12.5px;}
+th,td{text-align:left; padding:7px 8px;}
+tbody tr:nth-child(odd){background:var(--card2);}
+th{color:var(--ink3); font-weight:600; font-size:11px;}
+td.mono,th.mono{font-family:var(--mono);}
+
+.gate{display:flex; gap:10px; align-items:flex-start; padding:10px; border-radius:12px; font-size:13px; margin-bottom:6px;}
+.gate:nth-child(odd){background:var(--card2);}
+.gate .st{font-family:var(--mono); font-size:10px; padding:3px 7px; border-radius:20px; flex:0 0 auto;}
+.st.ok{background:var(--c-block-tint); color:var(--c-block);}
+.st.no{background:var(--warn-tint); color:var(--warn);}
+.st.na{background:var(--card3); color:var(--ink3);}
+.gate .gb{flex:1; min-width:0;}
+.gate .gb b{display:block; font-size:13px; margin-bottom:2px;}
+.gate .gb span{font-size:12px; color:var(--ink2);}
+
+.sheetlist button{display:flex; width:100%; text-align:left; margin-bottom:8px; background:var(--card2);}
+.sheetlist button:last-child{margin-bottom:0;}
+.figlegend{display:flex; gap:14px; font-size:12px; color:var(--ink2); margin:10px 0 4px; flex-wrap:wrap;}
+.figlegend span{display:flex; align-items:center; gap:6px;}
+.figlegend i{width:10px; height:10px; border-radius:50%; display:inline-block;}
+.caption{font-size:13px; color:var(--ink2); margin-top:6px;}
+
+.modal-bg{position:fixed; inset:0; background:rgba(20,24,20,.45); display:flex; align-items:flex-end; z-index:50; overflow-y:auto;}
+.modal-card{background:var(--card); width:100%; border-radius:20px 20px 0 0; padding:22px; padding-bottom:calc(22px + env(safe-area-inset-bottom,0px)); max-height:92vh; overflow-y:auto;}
+.modal-card h3{margin:0 0 8px; font-size:17px;}
+.modal-card p{font-size:14px; color:var(--ink2); line-height:1.5; margin:0 0 16px;}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-row">
+    <div class="hd-title">
+      <h1 id="hd-name">Steady Hands</h1>
+      <div class="hd-code" id="hd-code">no participant yet</div>
+    </div>
+    <div class="hd-clock"><div class="n" id="hd-elapsed">00:00</div><div class="l">ELAPSED</div></div>
+    <button class="iconbtn" id="menu-btn" aria-label="Menu" title="Menu">⋯</button>
+  </div>
+  <div class="modebar" id="modebar"></div>
+  <div class="strip" id="strip"></div>
+</header>
+
+<div class="wrap">
+  <div id="mainview">
+    <div id="nowcard"></div>
+    <div class="donelist" id="donelist"></div>
+    <div class="logsec"><details><summary>Session log</summary><div id="log" style="margin-top:8px"></div></details></div>
+  </div>
+  <div id="otherview" hidden></div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" hidden>
+<input type="file" id="dist-file" accept="application/json,.json,.csv,text/csv" hidden>
+<input type="file" id="analyze-file" accept="application/json,.json" multiple hidden>
+<div class="modal-bg" id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════════
+   STEADY HANDS — STUDY 2 SESSION RUNNER  ·  v4.0
+   Built to Analysis Protocol v16 §1.2 and Proposal v16 §8.2–8.2b.
+
+   Every constant below is traceable to a clause. Where the protocol
+   leaves a value to pilot, it lives in PARAMS with a "fixed on" date
+   and cannot be changed inside a study session (Standing Rule 1–3).
+
+   WHAT THIS FILE IS NOT. It is not a place where design decisions get
+   made. If something here needs to change, it changes in the protocol
+   first, then here, and the logbook records the date.
+
+   ── CHANGED IN v5, AND WHY ────────────────────────────────────────
+   A. The break offered at the induction boundary is now taken on its
+      own panel AFTER the KSS rating is confirmed, and it is timed.
+      v4 put the offer beside the slider with no enforced order, so a
+      participant could rest before rating — and the induction-end KSS
+      is the input to G2's "KSS rises >= 2 points". The file already
+      applied this reasoning to the PVT and not to the KSS.
+   B. That break's realised length is recorded. v4 stored taken:true
+      with no duration. It is the break that sits between the 22-min
+      induction and the late phase, so its length is a covariate on the
+      comparison the study turns on, not housekeeping.
+   C. The single load+removal KSS rating is now registered where it
+      belongs: a deviation is raised at session start and the S8.3
+      prediction it makes untestable ("Load, 60 s after removal:
+      KSS/PVT recovers") is entered as an abandoned analysis under
+      Standing Rule 7. In v4 the reasoning lived only in a comment.
+   D. Pre-onset error velocity is measured and emitted per onset, with
+      the perturbation-free velocity distribution per block. S2.14
+      calls this exclusion "required, not optional" and fixes its
+      threshold in pilot; v4 carried neither the parameter nor the
+      channel. The exclusion itself is applied in analysis, against the
+      BASELINE block's percentile, never the fatigued cell's.
+   E. The history-gap window delivers ~7.5 pairs, not the 9 that S8.6
+      sized it on. A power re-derivation reference is now a required
+      setup field and blocks a study session, rather than a note.
+   F. Induction windows slide at a 30 s stride. S8.6 says "sliding
+      one-minute windows"; v4 used a 60 s stride, which is consecutive
+      rather than sliding, and left the S8.6 baseline resting on two
+      windows and one degree of freedom. Baseline is now selected by
+      time range (windows wholly inside minutes two and three), which
+      is three windows. They overlap, so the SD is still optimistic and
+      the record says so rather than implying independence.
+      THIS IS A PROTOCOL CHANGE AND MUST BE CARRIED IN THE
+      PRE-REGISTRATION BEFORE IT IS RUN.
+   G. Practice now confirms the participant against the pilot-fixed
+      SDLP target instead of only recording numbers, per S8.2's
+      "confirmed against the participant's own baseline". Outside the
+      band is logged as a deviation. Nothing is tuned, ever.
+   H. noPreamble is load-bearing: the conformance row for the removal
+      probe now asserts it, so the flag cannot silently stop meaning
+      anything.
+
+   ── CHANGED IN v4, AND WHY ────────────────────────────────────────
+   1. The removal probe now follows the load block with nothing between
+      it and the load block. v3 interposed a KSS rating, which is both a
+      delay of unknown length and a cognitive task, inside the one
+      measurement whose logic is "capacity returns the moment load is
+      removed" (§1.2 "fixed immediately after the load block"; §8.2 p.40).
+      The load-block and removal-probe KSS are taken together after the
+      probe, carrying both boundary labels. THIS IS A PROTOCOL CHANGE
+      AND MUST BE CARRIED IN THE PRE-REGISTRATION BEFORE IT IS RUN.
+   2. No identifiable data is collected. The participant code is derived
+      from the participant number, not from a name. Appendix C: "No
+      identifiable data." Standing Rule 10's principle — a file that
+      never contained it cannot leak it.
+   3. The load condition no longer changes the tracking task. ◀ and ▶
+      keep identical size and position in every condition; the n-back
+      response key sits on its own row; per-response feedback and the
+      running score are confined to practice. §1.2 "tracking parameters
+      unchanged."
+   4. S2.18's channels are emitted under their protocol names — error
+      signal, tracked variable, control output, known injected input —
+      rather than collapsed into one. The degeneracy of the first two
+      under a centred compensatory display is logged, not assumed away.
+   5. Perturbation onsets carry no haptic cue. navigator.vibrate is
+      absent on iOS Safari, so v3's cue made the stimulus differ by
+      device.
+   ══════════════════════════════════════════════════════════════════ */
+
+const PROTOCOL = {
+  document:'Steady Hands Analysis Protocol v16 §1.2; Proposal v16 §8.2–8.2b',
+  study:'Study 2 — laboratory tracking',
+  runner:'session-runner v4.0',
+  fs:60,                    // §1.2 "60 Hz sampling"
+  dt:1/60,
+  fitWindowS:3.0,           // §1.2 "Common 3.0 s across both histories"
+  premiseTailS:2.0,         // §8.2a-ii "nor within 2 s of one ending"
+  pairIntervalS:3.0,        // §1.2 "P1 → 3.0 s → P2"
+  jitterMinS:15, jitterMaxS:19,
+  pairsPerBlock:8, singletonsPerBlock:2, groupsPerBlock:10,
+  leadInS:50,               // §8.2a block table
+  postLastOnsetS:6,
+  blockS:300, probeS:60, inductionS:1320, pvtS:180, practiceS:180, breakS:120,
+  premiseFloorS:150,        // §8.2a "below 150 s → jitter fixed at 15 s"
+  deployWindowS:60, deployStrideS:1,   // §8.2a-ii rolling 60 s windows
+  inductionWindowS:60, inductionStrideS:30,   // §8.6 "sliding one-minute windows" — window is the
+                                              // resolution, stride is the sampling of it. A stride
+                                              // equal to the window is consecutive, not sliding.
+  gapWindowS:180, gapStrideS:60,              // §8.6 history gap: 3-min windows, 1-min stride
+  gapBaselineRangeS:[60,180],                 // §8.6 standard score against minutes two and three.
+                                              // A range, not window ordinals, so the stride can
+                                              // change without silently moving the baseline.
+  gapPairsAssumed:9,                          // §8.6 sized the 3-min window on "≈9 pairs per window"
+  sessionTotalS:3600,       // §8.2 "The arithmetic closes at 60 minutes"
+  kssMin:1, kssMax:9,
+  pvtLapseMs:500,
+  pvtIsiMinMs:2000, pvtIsiMaxMs:10000,        // Dinges & Powell (1985)
+  breakToleranceS:5,        // realised break must land within this of nominal
+  clockToleranceS:2.0,      // wall-clock vs sample-clock reconciliation per block
+  participantMax:55,        // §8.2b "Recruitment targets 55"
+  correlationTimeRangeS:[0.121,0.443]  // S1.2 measured range; class chosen by this
+};
+
+/* Pilot-fixed parameters. `fixedOn` is the logbook date. A study session
+   cannot start until every one carries a date (Standing Rules 1 and 3). */
+const PARAM_SPEC = [
+  ['plantLambda',      0.10,   's^-1',  'First-order plant leak. phi = exp(-lambda/fs). §4 e(t+1)=phi·e(t)+d(t)+w(t)'],
+  ['motorNoiseSD',     0.016,  'units', 'w(t) SD per 60 Hz sample. Rescaled from the 20 Hz v2 value by sqrt(20/60)'],
+  ['impulseAmp',       0.18,   'units', 'One discrete corrective impulse. Discrete-input modality, §8.2b'],
+  ['pertAmp',          0.90,   'units', 'Perturbation displacement. Identical for P1 and P2 by construction'],
+  ['distRms',          0.0226, 'units', 'Injected disturbance RMS per sample after band-limiting and scaling'],
+  ['distBandLowHz',    0.20,   'Hz',    'Disturbance band-limit, low edge. Below this is steering intent and slow curvature, not road'],
+  ['distBandHighHz',   5.00,   'Hz',    'Disturbance band-limit, high edge. Placed so the band-limited trace lands inside the S1.2 correlation-time range'],
+  ['proxyBandLowHz',   0.50,   'Hz',    'Disturbance proxy band, low edge. §6.8 / S2.18 "above 0.5 Hz"'],
+  ['proxyBandHighHz', 10.00,   'Hz',    'Disturbance proxy band, high edge'],
+  ['nbackLevel',       2,      'n',     'Auditory n-back level. §1.2 "Concurrent auditory 2-back"'],
+  ['nbackIsiS',        2.00,   's',     'Stimulus onset asynchrony. The calibrated difficulty knob'],
+  ['nbackTargetRate',  0.30,   'p',     'Proportion of stimuli that are targets'],
+  ['clampAbs',         3.00,   'units', 'Display half-range. Samples at the bound are counted and reported'],
+  /* S2.14: "Exclude any perturbation whose pre-onset error velocity exceeds
+     the 90th percentile of that participant's baseline-block velocity
+     distribution. Threshold fixed in pilot and pre-registered." The
+     percentile and the window it is measured over are both free choices and
+     both belong here with a date. The window is not specified anywhere in
+     the protocol, which is exactly the kind of gap Section 0 is about. */
+  ['preOnsetVelPctile',   90,   'pct',   'Pre-onset velocity exclusion percentile. S2.14. Applied to the participant BASELINE block distribution, never the fatigued cell'],
+  ['preOnsetVelWindowS', 0.100, 's',     'Window over which pre-onset error velocity is measured. Not specified in the protocol; fixed here in pilot and logged'],
+  /* §8.2 "disturbance amplitude and load difficulty confirmed against the
+     participant's own baseline". The target itself comes from the G1 pilot,
+     so it defaults to zero and the study gate stays shut until it carries a
+     date. This file does not invent it. */
+  ['sdlpTargetIncreasePct', 0,  '%',     'The SDLP-premise increase the three manipulations are matched to. Set from the G1 pilot result. Practice confirms against it; nothing is ever tuned in a session'],
+  ['practiceConfirmBandPct', 60,'%',     'Half-width of the practice confirmation band around that target. Wide, because a 60 s practice segment yields ~30-35 s of premise. Outside the band is logged, never corrected']
+];
+
+const KSS_LABELS = ['Extremely alert','Very alert','Alert','Rather alert','Neither alert nor sleepy',
+  'Some signs of sleepiness','Sleepy, but no effort to stay awake','Sleepy, some effort to stay awake','Very sleepy, fighting sleep'];
+
+const CONDITIONS = {
+  base:    {title:'Baseline',                    tag:'steady', dist:false, load:false, desc:'Keep the dot centred. Tap ◀ or ▶ — each tap is one correction.'},
+  road:    {title:'Road disturbance',            tag:'bumpy',  dist:true,  load:false, desc:'Same task. A recorded road is pushing the dot around.'},
+  load:    {title:'Cognitive load',              tag:'split',  dist:false, load:true,  desc:'Same task, unchanged. Listen, and press MATCH when a letter repeats two back.'},
+  removal: {title:'Removal probe',               tag:'check',  dist:false, load:false, desc:'Same task, nothing else going on. 60 seconds.'},
+  induct:  {title:'Sustained induction',         tag:'watch',  dist:false, load:false, desc:'The same task, continuously, for 22 minutes.'},
+  fatBase: {title:'Baseline-equivalent (late)',  tag:'steady', dist:false, load:false, desc:'The baseline task again.'},
+  fatRoad: {title:'Road disturbance (late)',     tag:'bumpy',  dist:true,  load:false, desc:'The road task again.'},
+  persist: {title:'Persistence probe',           tag:'check',  dist:false, load:false, desc:'One last minute of the baseline task.'}
+};
+const TAGLABEL = {steady:'TRACKING', bumpy:'TRACKING · ROAD', split:'TRACKING · LOAD', watch:'INDUCTION', check:'PROBE', flow:'—'};
+
+/* Early-phase counterbalancing: the six orders of the three conditions.
+   §8.2 "The three early-phase conditions are counterbalanced." Assigned by
+   participant sequence number, not by choice, and recorded. */
+const ORDERS = [['base','road','load'],['base','load','road'],['road','base','load'],
+                ['road','load','base'],['load','base','road'],['load','road','base']];
+
+/* ── state ─────────────────────────────────────────────────────── */
+const BLANK = () => ({
+  schemaVersion:5,
+  mode:'pilot',                 // study | pilot | test
+  orderIndex:0,
+  code:'',                      // derived from the participant number. No name is held.
+  setup:{ethicsRef:'',ethicsDate:'',preregRef:'',preregDate:'',participantNo:'',operator:'',
+         gapPowerRef:'',gapPowerDate:''},
+  seed:0,
+  current:0, startedAt:null, withdrawn:false, withdrawnAtPhase:null,
+  finalized:false, completedSuccessfully:null,
+  env:null,
+  dist:null,                    // loaded disturbance trace metadata
+  breaks:[],                    // §8.2b breaks offered at phase boundaries, taken or not
+  steps:[], log:[], deviations:[], abandoned:[], calibration:[]
+});
+let S = BLANK();
+let STEPS = [];
+let tickHandle = null, uiView = 'main', skipFn = null;
+let testMode = false;
+try{ testMode = localStorage.getItem('sh_v16_testmode')==='1'; }catch(e){}
+
+const SKEY='sh_v16_session', PKEY='sh_v16_params', DKEY='sh_v16_dist', BPREFIX='sh_v16_block_';
+
+/* ── parameters ─────────────────────────────────────────────────── */
+let PARAMS = {};
+function defaultParams(){
+  const o={};
+  PARAM_SPEC.forEach(([k,v,u,note])=>{ o[k]={v, unit:u, note, fixedOn:null}; });
+  return o;
+}
+function loadParams(){
+  PARAMS = defaultParams();
+  try{
+    const raw=localStorage.getItem(PKEY);
+    if(raw){ const rec=JSON.parse(raw);
+      Object.keys(PARAMS).forEach(k=>{ if(rec[k] && typeof rec[k].v==='number'){ PARAMS[k].v=rec[k].v; PARAMS[k].fixedOn=rec[k].fixedOn||null; } });
+    }
+  }catch(e){}
+}
+function saveParams(){ try{ localStorage.setItem(PKEY, JSON.stringify(PARAMS)); }catch(e){} }
+function P(k){ return PARAMS[k].v; }
+function paramsLocked(){ return Object.keys(PARAMS).every(k=>!!PARAMS[k].fixedOn); }
+function paramSnapshot(){ const o={}; Object.keys(PARAMS).forEach(k=>o[k]={value:PARAMS[k].v, unit:PARAMS[k].unit, fixedOn:PARAMS[k].fixedOn}); return o; }
+
+/* ── seeded RNG, so every schedule is reproducible from the file ── */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15, 1|a); t=t+Math.imul(t^t>>>7, 61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function hashStr(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+function gaussFrom(rnd){ let u=0,v=0; while(u===0)u=rnd(); while(v===0)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+/* Participant code. Derived from the participant number only. No name is
+   collected, stored or transmitted — Appendix C, "No identifiable data",
+   and the principle Standing Rule 10 states for coordinates: a file that
+   never contained it cannot leak it. v3 hashed the participant's name,
+   which is not de-identification: a 32-bit digest of a short string from
+   a small candidate set inverts by enumeration, and that code is what
+   gets deposited. */
+function participantCode(no){
+  const n=parseInt(no,10);
+  return (n>=1) ? 'SH-'+String(n).padStart(3,'0') : '';
+}
+
+function nowISO(){ return new Date().toISOString(); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function fmtClock(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return h>0 ? h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0') : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cssvar(n){ try{ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }catch(e){ return '#888'; } }
+function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+function r3(x){ return Math.round(x*1000)/1000; }
+
+function log(msg){ S.log.push({at:nowISO(), msg}); save(); renderLog(); }
+/* Standing Rule 1. A deviation is logged where it happens, not remembered. */
+function deviation(kind, detail){
+  S.deviations.push({at:nowISO(), step:S.current, kind, detail});
+  S.log.push({at:nowISO(), msg:'DEVIATION — '+kind+': '+detail, dev:true});
+  save(); renderLog();
+}
+
+/* ══ SESSION STRUCTURE ══════════════════════════════════════════════
+   Proposal v16 §8.2. Built from the order index so the early phase is
+   counterbalanced and the removal probe follows the load block wherever
+   it falls. Fatigue conditions are positionally fixed, because a state
+   defined by elapsed time cannot be otherwise. ═══════════════════════ */
+function buildSteps(orderIndex){
+  const order=ORDERS[orderIndex%6];
+  const st=[];
+  const kss=(label,boundary,offerBreak)=>st.push({k:'kss',title:'KSS · '+label,tag:'check',dur:0,boundary,offerBreak:!!offerBreak});
+  st.push({k:'setup',    title:'Study setup',        tag:'flow', dur:0});
+  st.push({k:'consent',  title:'Consent',            tag:'flow', dur:0});
+  kss('start','session-start',false);
+  st.push({k:'practice', title:'Practice & familiarisation', tag:'flow', dur:PROTOCOL.practiceS,
+           segments:[{cond:'base',dur:60},{cond:'road',dur:60},{cond:'load',dur:60}]});
+  order.forEach((c,i)=>{
+    st.push({k:'track', cond:c, phase:'early', dur:PROTOCOL.blockS, title:CONDITIONS[c].title, tag:CONDITIONS[c].tag, posInPhase:i+1});
+    if(c==='load'){
+      /* §1.2 "fixed immediately after the load block"; §8.2 p.40 "60 s of
+         unloaded baseline immediately after the load block". Nothing goes
+         between them — not a rating, not a prompt. The probe tests whether
+         capacity returns the moment load is removed, so any interposed task
+         is both a delay of unknown length and a cognitive load of its own.
+         The two boundary ratings are therefore taken together, once, after
+         the probe, and the record carries both labels. */
+      st.push({k:'track', cond:'removal', phase:'probe', dur:PROTOCOL.probeS, title:CONDITIONS.removal.title,
+               tag:'check', fixedTo:'load block', noPreamble:true});
+      kss('after load block and removal probe','early-'+(i+1)+'+removal-probe', false);
+    } else {
+      kss('after '+CONDITIONS[c].title.toLowerCase(),'early-'+(i+1), false);
+    }
+  });
+  st.push({k:'pvt', title:'PVT · end of early phase', tag:'check', dur:PROTOCOL.pvtS,
+           point:'early-phase-end', offerBreakAfter:'early-phase-end'});
+  st.push({k:'track', cond:'induct', phase:'induction', dur:PROTOCOL.inductionS, title:CONDITIONS.induct.title, tag:'watch'});
+  kss('after induction','induction-end', true);
+  st.push({k:'track', cond:'fatBase', phase:'late', dur:PROTOCOL.blockS, title:CONDITIONS.fatBase.title, tag:'steady', posInPhase:1});
+  kss('after late baseline','late-1', false);
+  st.push({k:'track', cond:'fatRoad', phase:'late', dur:PROTOCOL.blockS, title:CONDITIONS.fatRoad.title, tag:'bumpy', posInPhase:2});
+  kss('after late road','late-2', false);
+  /* No break is offered after the session-end PVT: the 2-minute break below
+     is part of the design and the persistence probe is only interpretable
+     against a known break length. */
+  st.push({k:'pvt', title:'PVT · session end', tag:'check', dur:PROTOCOL.pvtS, point:'session-end'});
+  st.push({k:'break', title:'Break', tag:'flow', dur:PROTOCOL.breakS});
+  st.push({k:'track', cond:'persist', phase:'probe', dur:PROTOCOL.probeS, title:CONDITIONS.persist.title, tag:'check'});
+  kss('after persistence probe','persistence-probe', false);
+  st.push({k:'finish', title:'Finish session', tag:'flow', dur:0});
+  return st;
+}
+/* Standing Rules 12 and 20: check the arithmetic before running anyone,
+   at every level. KSS is self-paced inside the §8.2 assessment allowance
+   and carries a nominal zero. */
+function sessionArithmetic(steps){
+  const nominal=steps.reduce((a,s)=>a+(s.dur||0),0);
+  return {nominalS:nominal, requiredS:PROTOCOL.sessionTotalS, closes:nominal===PROTOCOL.sessionTotalS};
+}
+
+/* ══ PERTURBATION SCHEDULE ═════════════════════════════════════════
+   Proposal v16 §8.2a. Generated before the block starts, stored whole,
+   never regenerated mid-block. ════════════════════════════════════ */
+function buildSchedule(durS, seed, opts){
+  opts=opts||{};
+  const fs=PROTOCOL.fs, rnd=mulberry32(seed);
+  const mk=(jitterFixed)=>{
+    const groups=[], onsets=[];
+    const leadIn = opts.leadInS!=null ? opts.leadInS : PROTOCOL.leadInS;
+    let t=leadIn, gi=0;
+    const cycle=()=>{
+      const types=[]; for(let i=0;i<PROTOCOL.pairsPerBlock;i++) types.push('pair');
+      for(let i=0;i<PROTOCOL.singletonsPerBlock;i++) types.push('single');
+      for(let i=types.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const x=types[i]; types[i]=types[j]; types[j]=x; }
+      return types;
+    };
+    let pool=cycle();
+    const tail = opts.tailS!=null ? opts.tailS : PROTOCOL.postLastOnsetS;
+    while(true){
+      if(!pool.length) pool=cycle();
+      const type=pool[0];
+      const lastOn = onsets.length ? onsets[onsets.length-1].tS : null;
+      const start = lastOn==null ? leadIn
+        : lastOn + (jitterFixed ? PROTOCOL.jitterMinS
+                   : PROTOCOL.jitterMinS + rnd()*(PROTOCOL.jitterMaxS-PROTOCOL.jitterMinS));
+      const end = type==='pair' ? start+PROTOCOL.pairIntervalS : start;
+      if(end + tail > durS) break;
+      if(opts.maxGroups && groups.length>=opts.maxGroups) break;
+      pool.shift();
+      const g={index:gi++, type, tS:start};
+      groups.push(g);
+      onsets.push({tS:+start.toFixed(3), nIdx:Math.round(start*fs), history:'quiet', group:g.index, gtype:type,
+                   dir: rnd()<0.5?-1:1});
+      if(type==='pair') onsets.push({tS:+(start+PROTOCOL.pairIntervalS).toFixed(3), nIdx:Math.round((start+PROTOCOL.pairIntervalS)*fs),
+                   history:'recent', group:g.index, gtype:type, dir: rnd()<0.5?-1:1});
+    }
+    return {groups, onsets, lastOnsetS:onsets.length?onsets[onsets.length-1].tS:null, jitterFixed};
+  };
+  let sch=mk(false);
+  let free=premiseFreeSeconds(sch.onsets, durS);
+  let refixed=false;
+  /* §8.2a: if the perturbation-free sample falls below 150 s the jitter is
+     fixed at 15 s rather than a pair being dropped. Applies to full blocks. */
+  if(durS>=PROTOCOL.blockS && free<PROTOCOL.premiseFloorS){
+    sch=mk(true); free=premiseFreeSeconds(sch.onsets, durS); refixed=true;
+  }
+  sch.durS=durS; sch.predictedFreeS=+free.toFixed(2); sch.jitterRefixed=refixed;
+  sch.pairs=sch.groups.filter(g=>g.type==='pair').length;
+  sch.singletons=sch.groups.filter(g=>g.type==='single').length;
+  sch.quietHistoryN=sch.onsets.filter(o=>o.history==='quiet').length;
+  sch.recentHistoryN=sch.onsets.filter(o=>o.history==='recent').length;
+  sch.leadInS=(opts.leadInS!=null?opts.leadInS:PROTOCOL.leadInS);
+  sch.leadOutS=sch.lastOnsetS!=null ? +(durS-sch.lastOnsetS-PROTOCOL.postLastOnsetS).toFixed(2) : null;
+  sch.groupsPerMin=+(sch.groups.length/(durS/60)).toFixed(3);
+  /* Density inside the sequence, which is the quantity that must match
+     between a block and the induction (§8.6 "at constant density").
+     The overall rate is diluted by the lead-in and lead-out. */
+  const spanS=sch.lastOnsetS!=null ? (sch.lastOnsetS+PROTOCOL.postLastOnsetS-sch.leadInS) : null;
+  sch.sequenceSpanS = spanS!=null ? +spanS.toFixed(2) : null;
+  sch.sequenceGroupsPerMin = spanS>0 ? +(sch.groups.length/(spanS/60)).toFixed(3) : null;
+  sch.sequencePairsPerMin = spanS>0 ? +(sch.pairs/(spanS/60)).toFixed(3) : null;
+  /* §8.6 sizes the history-gap window at 3 minutes because "one minute
+     supplies roughly three pairs". Report what the realised schedule
+     actually delivers per 3-minute window, so the power re-derivation uses
+     the achieved count rather than the document's rounding. */
+  sch.pairsPerGapWindow = spanS>0 ? +(sch.pairs/(spanS/60)*(PROTOCOL.gapWindowS/60)).toFixed(2) : null;
+  sch.seed=seed;
+  return sch;
+}
+/* Probe schedule, pre-specified rather than jittered: 60 s cannot hold the
+   block schedule. Fixed here, before any participant, and logged.
+   Standing Rule 19 applies downstream and is carried in the record: a gap
+   estimated from 2 pairs is not comparable to one estimated from 8 unless
+   the block estimate is subsampled to the same count and censoring. */
+function buildProbeSchedule(durS, seed){
+  const fs=PROTOCOL.fs, rnd=mulberry32(seed);
+  const onsets=[], groups=[];
+  [[15.0,0],[35.0,1]].forEach(([t,gi])=>{
+    groups.push({index:gi, type:'pair', tS:t});
+    onsets.push({tS:t, nIdx:Math.round(t*fs), history:'quiet', group:gi, gtype:'pair', dir:rnd()<0.5?-1:1});
+    onsets.push({tS:t+3, nIdx:Math.round((t+3)*fs), history:'recent', group:gi, gtype:'pair', dir:rnd()<0.5?-1:1});
+  });
+  const free=premiseFreeSeconds(onsets, durS);
+  return {groups, onsets, durS, predictedFreeS:+free.toFixed(2), jitterFixed:true, jitterRefixed:false,
+    pairs:2, singletons:0, quietHistoryN:2, recentHistoryN:2, preSpecified:true, seed,
+    leadInS:15, lastOnsetS:38, groupsPerMin:+(2/(durS/60)).toFixed(3),
+    ruleNineteen:'2 quiet-history and 2 recent-history observations. Comparable only against equal-count, equally censored subsamples of block data (Standing Rule 19).'};
+}
+function premiseFreeSeconds(onsets, durS){
+  const excl=PROTOCOL.fitWindowS+PROTOCOL.premiseTailS;
+  const iv=onsets.map(o=>[o.tS,o.tS+excl]).sort((a,b)=>a[0]-b[0]);
+  const m=[];
+  iv.forEach(([a,b])=>{ if(m.length && a<=m[m.length-1][1]) m[m.length-1][1]=Math.max(m[m.length-1][1],b); else m.push([a,b]); });
+  const ex=m.reduce((s,[a,b])=>s+Math.min(b,durS)-Math.min(a,durS),0);
+  return durS-ex;
+}
+
+/* ══ DISTURBANCE ══════════════════════════════════════════════════
+   §1.2: Study 1's measured lateral-acceleration trace, resampled
+   100 → 60 Hz, band-limited, amplitude scaled in pilot, RETAINED AS A
+   FILE so it enters the ARMAX fit as a known exogenous input, sample by
+   sample. The runner therefore stores the exact injected d(t).
+   ═════════════════════════════════════════════════════════════════ */
+let DIST=null;   // {meta:{...}, samples60:Float32Array}
+function loadDistFromStore(){
+  try{
+    const raw=localStorage.getItem(DKEY); if(!raw) return;
+    const rec=JSON.parse(raw);
+    DIST={meta:rec.meta, samples60:Float32Array.from(rec.samples60)};
+  }catch(e){ DIST=null; }
+}
+function storeDist(){
+  if(!DIST) return;
+  try{ localStorage.setItem(DKEY, JSON.stringify({meta:DIST.meta, samples60:Array.from(DIST.samples60, v=>+v.toFixed(6))})); }
+  catch(e){ deviation('storage','Disturbance trace too large for local storage — reload it before each session'); }
+}
+function resampleTo60(src, srcHz){
+  if(srcHz===PROTOCOL.fs) return Float32Array.from(src);
+  const n=Math.floor((src.length-1)*(PROTOCOL.fs/srcHz))+1, out=new Float32Array(n);
+  const ratio=srcHz/PROTOCOL.fs;
+  for(let i=0;i<n;i++){
+    const x=i*ratio, i0=Math.floor(x), i1=Math.min(src.length-1,i0+1), f=x-i0;
+    out[i]=src[i0]*(1-f)+src[i1]*f;
+  }
+  return out;
+}
+/* One-pole high-pass then one-pole low-pass, forward only. Phase is not
+   corrected and does not need to be: d(t) is stored exactly as injected,
+   so the analysis sees the signal the participant actually received. */
+function bandLimit(x, loHz, hiHz){
+  const dt=PROTOCOL.dt, out=new Float32Array(x.length);
+  const rcH=1/(2*Math.PI*loHz), aH=rcH/(rcH+dt);
+  const rcL=1/(2*Math.PI*hiHz), aL=dt/(rcL+dt);
+  let yPrev=0, xPrev=x[0]||0, z=0;
+  for(let i=0;i<x.length;i++){
+    const y=aH*(yPrev + x[i] - xPrev); yPrev=y; xPrev=x[i];
+    z=z + aL*(y-z);
+    out[i]=z;
+  }
+  return out;
+}
+function rms(a){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*a[i]; return Math.sqrt(s/Math.max(1,a.length)); }
+function lag1(a){
+  let m=0; for(let i=0;i<a.length;i++) m+=a[i]; m/=a.length;
+  let n0=0,n1=0;
+  for(let i=0;i<a.length;i++){ const d=a[i]-m; n0+=d*d; if(i) n1+=d*(a[i-1]-m); }
+  return n0>0 ? n1/n0 : 0;
+}
+function installDisturbance(rawSamples, srcHz, meta){
+  const res=resampleTo60(rawSamples, srcHz);
+  const band=bandLimit(res, P('distBandLowHz'), P('distBandHighHz'));
+  const r=rms(band) || 1;
+  const scale=P('distRms')/r;
+  const out=new Float32Array(band.length);
+  for(let i=0;i<band.length;i++) out[i]=band[i]*scale;
+  const ac=lag1(out);
+  const tau = ac>0 && ac<1 ? -PROTOCOL.dt/Math.log(ac) : null;
+  DIST={meta:Object.assign({}, meta, {
+    sourceHz:srcHz, resampledToHz:PROTOCOL.fs, resample:'linear interpolation',
+    bandLimitHz:[P('distBandLowHz'),P('distBandHighHz')],
+    amplitudeScale:+scale.toExponential(4), targetRms:P('distRms'),
+    achievedRms:+rms(out).toFixed(6), lag1:+ac.toFixed(4),
+    correlationTimeS: tau!=null ? +tau.toFixed(4) : null,
+    inS12Range: tau!=null && tau>=PROTOCOL.correlationTimeRangeS[0] && tau<=PROTOCOL.correlationTimeRangeS[1],
+    durationS:+(out.length/PROTOCOL.fs).toFixed(1), installedAt:nowISO(), surrogate:!!meta.surrogate
+  }), samples60:out};
+  storeDist();
+  S.dist=DIST.meta; save();
+  log('Disturbance trace installed — '+(DIST.meta.name||'unnamed')+', tau='+(DIST.meta.correlationTimeS||'?')+' s');
+  if(tau!=null && !DIST.meta.inS12Range)
+    deviation('disturbance','Correlation time '+tau.toFixed(3)+' s is outside the S1.2 measured range 0.121–0.443 s');
+}
+/* Pilot-only stand-in so the instrument can be exercised before the Study 1
+   trace is loaded. Never permitted in a study session. */
+function installSurrogate(){
+  /* 1/f rather than white. A white surrogate is the wrong CLASS: it would
+     band-limit to a correlation time an order of magnitude below the S1.2
+     measured range, so it could not exercise the correlation-time check the
+     real trace has to pass. Voss-McCartney, seeded, so it is reproducible. */
+  const rnd=mulberry32(20260924);
+  const n=PROTOCOL.fs*600, raw=new Float32Array(n), rows=new Array(16).fill(0);
+  let run=0;
+  for(let i=0;i<n;i++){
+    let k=0, c=i;
+    while(k<16 && (c&1)===0){ c>>=1; k++; }
+    if(k<16){ run-=rows[k]; rows[k]=gaussFrom(rnd); run+=rows[k]; }
+    raw[i]=(run+gaussFrom(rnd))/Math.sqrt(17);
+  }
+  installDisturbance(raw, PROTOCOL.fs, {name:'SURROGATE (not Study 1 data)', surrogate:true,
+    class:'seeded 1/f, correct class only', journey:'n/a'});
+  deviation('disturbance','Seeded surrogate disturbance installed in place of the Study 1 trace. Pilot use only.');
+}
+
+/* ══ BLOCK PAYLOAD STORAGE ════════════════════════════════════════
+   Sample-level series are large. They are written once per block as
+   base64 Int16 (scale 1000, little-endian) under their own key, so the
+   session record stays small and a crash cannot cost a completed block.
+   ═════════════════════════════════════════════════════════════════ */
+function encodeI16(f32, scale){
+  const a=new Int16Array(f32.length);
+  for(let i=0;i<f32.length;i++){ let v=Math.round(f32[i]*scale); a[i]=v>32767?32767:(v<-32768?-32768:v); }
+  const bytes=new Uint8Array(a.buffer);
+  let s=''; const CH=0x8000;
+  for(let i=0;i<bytes.length;i+=CH) s+=String.fromCharCode.apply(null, bytes.subarray(i,i+CH));
+  return btoa(s);
+}
+function putBlock(i, payload){
+  try{ localStorage.setItem(BPREFIX+i, JSON.stringify(payload)); return true; }
+  catch(e){ deviation('storage','Block '+i+' series could not be written to local storage — save the session file now'); return false; }
+}
+function getBlock(i){ try{ const r=localStorage.getItem(BPREFIX+i); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function clearBlocks(){ try{ for(let i=0;i<200;i++) localStorage.removeItem(BPREFIX+i); }catch(e){} }
+
+/* ══ MEASURES ═════════════════════════════════════════════════════ */
+function sdOf(arr, mask){
+  let n=0,m=0;
+  for(let i=0;i<arr.length;i++){ if(mask&&!mask[i]) continue; m+=arr[i]; n++; }
+  if(n<2) return {sd:null,n:0};
+  m/=n; let ss=0;
+  for(let i=0;i<arr.length;i++){ if(mask&&!mask[i]) continue; const d=arr[i]-m; ss+=d*d; }
+  return {sd:Math.sqrt(ss/(n-1)), n, mean:m};
+}
+/* §8.2a-ii SDLP-premise: every sample that is neither inside a fit window
+   nor within 2 s of one ending. Realised duration and segment count are
+   reported with the value, always. */
+function sdlpPremise(err, onsets){
+  const fs=PROTOCOL.fs, excl=Math.round((PROTOCOL.fitWindowS+PROTOCOL.premiseTailS)*fs);
+  const mask=new Uint8Array(err.length).fill(1);
+  onsets.forEach(o=>{ const a=Math.max(0,o.nIdx), b=Math.min(err.length, o.nIdx+excl); for(let i=a;i<b;i++) mask[i]=0; });
+  let segs=0, prev=0;
+  for(let i=0;i<mask.length;i++){ if(mask[i]&&!prev) segs++; prev=mask[i]; }
+  const r=sdOf(err, mask);
+  return {sdlp: r.sd!=null?+r.sd.toFixed(4):null, samples:r.n, durationS:+(r.n/fs).toFixed(1), segments:segs,
+          meetsG1DurationFloor: (r.n/fs) >= PROTOCOL.premiseFloorS};
+}
+/* S2.1b — "Report, per condition: the variance of fit-window samples, its
+   share of total block variance". The complement of the premise mask, so the
+   two partition the block and the share is exact. Fixed before the data. */
+function fitWindowStats(err, onsets){
+  const fs=PROTOCOL.fs, excl=Math.round((PROTOCOL.fitWindowS+PROTOCOL.premiseTailS)*fs);
+  const inWin=new Uint8Array(err.length);
+  onsets.forEach(o=>{ const a=Math.max(0,o.nIdx), b=Math.min(err.length, o.nIdx+excl); for(let i=a;i<b;i++) inWin[i]=1; });
+  const w=sdOf(err, inWin), all=sdOf(err, null);
+  const vw = w.sd!=null ? w.sd*w.sd : null;
+  const va = all.sd!=null ? all.sd*all.sd : null;
+  return {variance: vw!=null?+vw.toExponential(5):null,
+          samples:w.n, durationS:+(w.n/fs).toFixed(1),
+          blockVariance: va!=null?+va.toExponential(5):null,
+          shareOfBlockVariance: (vw!=null&&va>0)? +((vw*w.n)/(va*all.n)).toFixed(4) : null,
+          note:'S2.1b. Share is the fit-window contribution to total block sum-of-squares. Expected higher in the fatigued cell; report it, do not assume it.'};
+}
+/* §8.2a-ii SDLP-deployment: SD over rolling 60 s windows on the full
+   series, perturbations included. Window and stride stated. */
+function sdlpDeployment(err){
+  const fs=PROTOCOL.fs, w=Math.round(PROTOCOL.deployWindowS*fs), st=Math.round(PROTOCOL.deployStrideS*fs);
+  if(err.length<w){
+    const r=sdOf(err,null);
+    return {mean:r.sd!=null?+r.sd.toFixed(4):null, windows:1, windowS:+(err.length/fs).toFixed(1),
+            strideS:PROTOCOL.deployStrideS, shortWindow:true, series:[r.sd!=null?+r.sd.toFixed(4):null]};
+  }
+  const c1=new Float64Array(err.length+1), c2=new Float64Array(err.length+1);
+  for(let i=0;i<err.length;i++){ c1[i+1]=c1[i]+err[i]; c2[i+1]=c2[i]+err[i]*err[i]; }
+  const out=[];
+  for(let a=0;a+w<=err.length;a+=st){
+    const s1=c1[a+w]-c1[a], s2=c2[a+w]-c2[a];
+    const v=(s2-s1*s1/w)/(w-1);
+    out.push(+Math.sqrt(Math.max(0,v)).toFixed(4));
+  }
+  const mean=out.reduce((a,b)=>a+b,0)/out.length;
+  return {mean:+mean.toFixed(4), windows:out.length, windowS:PROTOCOL.deployWindowS, strideS:PROTOCOL.deployStrideS,
+          shortWindow:false, series:out};
+}
+/* §8.5 / S2.12: corrective events taken from the input stream, upstream of
+   the plant. CV of inter-correction interval is the primary statistic and
+   is never reported without the rate. */
+function intercorrection(inputs, durS){
+  const t=inputs.map(e=>e.tS).sort((a,b)=>a-b);
+  if(t.length<3) return {n:t.length, ratePerS:+(t.length/durS).toFixed(3), meanIntervalS:null, cv:null, longGaps:null, intervals:[]};
+  const iv=[]; for(let i=1;i<t.length;i++) iv.push(t[i]-t[i-1]);
+  const m=iv.reduce((a,b)=>a+b,0)/iv.length;
+  const sd=Math.sqrt(iv.reduce((a,b)=>a+(b-m)*(b-m),0)/(iv.length-1));
+  const sorted=iv.slice().sort((a,b)=>a-b), med=sorted[Math.floor(sorted.length/2)];
+  return {n:t.length, ratePerS:+(t.length/durS).toFixed(3), meanIntervalS:+m.toFixed(4),
+          sdIntervalS:+sd.toFixed(4), cv:+(sd/m).toFixed(4), medianIntervalS:+med.toFixed(4),
+          longGaps:iv.filter(x=>x>3*med).length, intervals:iv.map(x=>+x.toFixed(3))};
+}
+/* Running band-limited variance, computed online, band edges from PARAMS. */
+function makeBandMeter(){
+  const dt=PROTOCOL.dt;
+  const rcH=1/(2*Math.PI*P('proxyBandLowHz')), aH=rcH/(rcH+dt);
+  const rcL=1/(2*Math.PI*P('proxyBandHighHz')), aL=dt/(rcL+dt);
+  return {aH,aL,yPrev:0,xPrev:0,z:0,n:0,s1:0,s2:0,
+    push(x){ const y=this.aH*(this.yPrev+x-this.xPrev); this.yPrev=y; this.xPrev=x;
+             this.z=this.z+this.aL*(y-this.z); this.n++; this.s1+=this.z; this.s2+=this.z*this.z; },
+    variance(){ return this.n>1 ? (this.s2-this.s1*this.s1/this.n)/(this.n-1) : null; }};
+}
+/* §8.6 — 1-minute windows for SDLP and inter-correction CV. Both SDLP
+   definitions are carried per window: premise is the quantity §8.3 predicts
+   on, deployment is what a detector would compute. v3 reported a single raw
+   SD, which was neither. */
+function windowSeries(err, inputs, onsets, durS, winS, strideS){
+  const fs=PROTOCOL.fs, w=Math.round(winS*fs), st=Math.round(strideS*fs), out=[];
+  const excl=PROTOCOL.fitWindowS+PROTOCOL.premiseTailS;
+  for(let a=0;a+w<=err.length;a+=st){
+    const seg=err.subarray(a,a+w);
+    const t0=a/fs, t1=(a+w)/fs;
+    const ons=onsets.filter(o=>o.tS<t1 && o.tS+excl>t0).map(o=>({nIdx:o.nIdx-a}));
+    const pr=sdlpPremise(seg, ons);
+    const dep=sdOf(seg,null);
+    const ins=inputs.filter(e=>e.tS>=t0 && e.tS<t1);
+    const ic=intercorrection(ins, winS);
+    out.push({tStartS:+t0.toFixed(1), minuteIndex:+(t0/60).toFixed(3),
+      sdlpPremise:pr.sdlp, premiseDurationS:pr.durationS,
+      sdlpDeployment:dep.sd!=null?+dep.sd.toFixed(4):null,
+      correctionRate:ic.ratePerS, cv:ic.cv,
+      pairsInWindow:onsets.filter(o=>o.history==='recent'&&o.tS>=t0&&o.tS<t1).length});
+  }
+  return out;
+}
+/* §8.6 — "Each series is expressed as a standard score against that
+   participant's windows in minutes two and three." Computed here so the
+   baseline is fixed by the protocol rather than chosen by an analyst. */
+function standardScore(series, key){
+  const [b0,b1]=PROTOCOL.gapBaselineRangeS, winS=PROTOCOL.inductionWindowS;
+  /* Baseline windows are those lying WHOLLY inside minutes two and three.
+     A window that starts at 150 s runs to 210 s and is partly minute four;
+     including it would quietly widen the baseline §8.6 named. */
+  const inBase=w=>w.tStartS>=b0 && w.tStartS+winS<=b1;
+  const baseW=series.filter(inBase);
+  const base=baseW.map(w=>w[key]).filter(v=>v!=null);
+  const frame={baselineRangeS:PROTOCOL.gapBaselineRangeS, baselineLabel:'minutes two and three (§8.6)',
+    baselineWindowsUsed:base.length, baselineWindowStartsS:baseW.map(w=>w.tStartS),
+    /* Said plainly rather than left for a reader to work out: these windows
+       overlap at a 30 s stride, so they are not independent observations and
+       the SD below is optimistic. A 2-SD crossing on a baseline of three
+       dependent windows is a weak criterion and is reported as one. */
+    independence:'Baseline windows overlap at a '+PROTOCOL.inductionStrideS+' s stride and are not independent. The SD is optimistic and the 2-SD departure is a screening criterion, not a test.'};
+  if(base.length<2) return Object.assign({}, frame, {mean:null, sd:null, z:null,
+    note:'Insufficient baseline windows to standard-score.'});
+  const m=base.reduce((a,b)=>a+b,0)/base.length;
+  const sd=Math.sqrt(base.reduce((a,b)=>a+(b-m)*(b-m),0)/(base.length-1));
+  const crossings=(sd>0)?series.filter(w=>w[key]!=null && w.tStartS>=b1 && Math.abs((w[key]-m)/sd)>=2):[];
+  return Object.assign({}, frame, {
+    mean:+m.toFixed(5), sd:+sd.toFixed(5),
+    z: series.map(w=>({tStartS:w.tStartS, z: (w[key]!=null && sd>0) ? +((w[key]-m)/sd).toFixed(3) : null})),
+    firstDeparture2SD: crossings.length?crossings[0].tStartS:null,
+    /* One crossing on overlapping windows is cheap. The first run of two
+       consecutive crossing windows is reported alongside it so the analyst
+       can see which one the shape claim is resting on. */
+    firstDeparture2SDSustained: (()=>{ for(let i=0;i+1<crossings.length;i++){
+        if(Math.abs(crossings[i+1].tStartS-crossings[i].tStartS-PROTOCOL.inductionStrideS)<1e-6) return crossings[i].tStartS; }
+      return null; })(),
+    crossingsN:crossings.length});
+}
+/* §8.6 — the history gap is fitted in analysis, not here. What the runner
+   owes it is the realised observation count per 3-minute window, because
+   the window length was chosen on an assumed "≈9 pairs per window" and
+   Standing Rule 19 turns on that count being equal across comparisons. */
+function gapWindowCensus(onsets, durS){
+  const out=[];
+  for(let t0=0; t0+PROTOCOL.gapWindowS<=durS; t0+=PROTOCOL.gapStrideS){
+    const t1=t0+PROTOCOL.gapWindowS;
+    out.push({tStartS:t0,
+      pairs:onsets.filter(o=>o.history==='recent'&&o.tS>=t0&&o.tS<t1).length,
+      quietHistory:onsets.filter(o=>o.history==='quiet'&&o.tS>=t0&&o.tS<t1).length});
+  }
+  const p=out.map(w=>w.pairs);
+  return {windowS:PROTOCOL.gapWindowS, strideS:PROTOCOL.gapStrideS, windows:out.length,
+    pairsPerWindow:{min:p.length?Math.min.apply(null,p):null, max:p.length?Math.max.apply(null,p):null,
+      mean:p.length?+(p.reduce((a,b)=>a+b,0)/p.length).toFixed(2):null},
+    assumedInProtocol:PROTOCOL.gapPairsAssumed,
+    note:'§8.6 sizes this window on "≈9 pairs per window". Re-derive power at the realised count before collection (Standing Rule 19).',
+    series:out};
+}
+
+/* ══ PRE-ONSET VELOCITY (S2.14) ═══════════════════════════════════
+   "Exclude any perturbation whose pre-onset error velocity exceeds the
+   90th percentile of that participant's baseline-block velocity
+   distribution. Required, not optional."
+
+   The runner does not apply the exclusion — the threshold is a property
+   of the participant's BASELINE block and is not known while a later
+   block is running, and applying it live would drop data inside the
+   session on a number computed from the session. What the runner owes
+   the analysis is the two channels it cannot reconstruct afterwards
+   without re-deriving them from a decoded series: the pre-onset velocity
+   at every onset, and the perturbation-free velocity distribution the
+   percentile is read off. Both are emitted per block, under one fixed
+   window, so the analyst cannot choose the window after seeing the
+   effect. ══════════════════════════════════════════════════════════ */
+function velWindowSamples(){ return Math.max(1, Math.round(P('preOnsetVelWindowS')*PROTOCOL.fs)); }
+function preOnsetVelocities(err, onsets){
+  const w=velWindowSamples(), dtW=w/PROTOCOL.fs;
+  return onsets.map(o=>{
+    const i=o.nIdx;
+    const ok = i-w>=0 && i<err.length;
+    return {tS:o.tS, history:o.history, group:o.group, gtype:o.gtype, dir:o.dir,
+      velocity: ok ? +((err[i]-err[i-w])/dtW).toFixed(4) : null,
+      absVelocity: ok ? +(Math.abs(err[i]-err[i-w])/dtW).toFixed(4) : null,
+      truncated: !ok};
+  });
+}
+function premiseVelocityDistribution(err, onsets){
+  const fs=PROTOCOL.fs, w=velWindowSamples(), dtW=w/fs;
+  const excl=Math.round((PROTOCOL.fitWindowS+PROTOCOL.premiseTailS)*fs);
+  const mask=new Uint8Array(err.length).fill(1);
+  onsets.forEach(o=>{ const a=Math.max(0,o.nIdx), b=Math.min(err.length,o.nIdx+excl); for(let i=a;i<b;i++) mask[i]=0; });
+  const v=[];
+  for(let i=w;i<err.length;i++){ if(mask[i]&&mask[i-w]) v.push(Math.abs((err[i]-err[i-w])/dtW)); }
+  if(v.length<10) return null;
+  v.sort((a,b)=>a-b);
+  const q=pc=>+v[Math.min(v.length-1, Math.floor(pc/100*v.length))].toFixed(4);
+  return {n:v.length, windowS:+dtW.toFixed(4),
+    p50:q(50), p75:q(75), p90:q(90), p95:q(95), max:+v[v.length-1].toFixed(4),
+    atConfiguredPctile:q(P('preOnsetVelPctile')), pctile:P('preOnsetVelPctile'),
+    note:'|Δerror| over a '+dtW.toFixed(3)+' s window, on perturbation-free samples only. S2.14 takes the participant\'s BASELINE-block value at this percentile as the exclusion threshold and applies it to every condition. Report the exclusion rate by condition AND by history: differential exclusion is itself a bias.'};
+}
+
+/* ══ ENGINE — fixed-step 60 Hz ════════════════════════════════════ */
+const Eng={active:false};
+function engStop(){
+  if(Eng.raf) cancelAnimationFrame(Eng.raf);
+  if(Eng.nbTimer) clearTimeout(Eng.nbTimer);
+  Eng.raf=null; Eng.nbTimer=null; Eng.active=false;
+}
+function engStart(i, step, onDone){
+  const cond = step.k==='practice' ? step.segments[0].cond : step.cond;
+  const durS = step.dur;
+  const N = Math.round(durS*PROTOCOL.fs);
+  const seed = (S.seed ^ hashStr('step'+i+':'+(step.cond||step.k)))>>>0;
+  /* §8.2a: a fixed 300 s block carries exactly 10 groups — 8 pairs and 2
+     catch singletons. The induction runs the same schedule continuously at
+     the same sequence density. Practice gets a short lead-in so the
+     participant meets perturbations in each of its three minutes. */
+  const schedOpts = step.k==='practice' ? {leadInS:10}
+    : step.phase==='induction' ? {}
+    : {maxGroups:PROTOCOL.groupsPerBlock};
+  const sched = durS<=PROTOCOL.probeS ? buildProbeSchedule(durS, seed) : buildSchedule(durS, seed, schedOpts);
+  if(step.k==='practice') sched.familiarisation=true;
+  /* Segment plan: practice switches condition inside the step; every other
+     tracking step is a single segment. Condition is never switched mid-block
+     in a data block. */
+  const segs = step.segments ? step.segments.map((s,k)=>({cond:s.cond, n0:Math.round((step.segments.slice(0,k).reduce((a,x)=>a+x.dur,0))*PROTOCOL.fs), n1:Math.round((step.segments.slice(0,k+1).reduce((a,x)=>a+x.dur,0))*PROTOCOL.fs)}))
+                             : [{cond, n0:0, n1:N}];
+
+  const rnd=mulberry32((seed^0x9e3779b9)>>>0);
+  /* Injected disturbance, precomputed for the whole block and retained. */
+  const dArr=new Float32Array(N);
+  let distUsed=false, distOffset=null;
+  const needsDist = segs.some(s=>CONDITIONS[s.cond].dist);
+  if(needsDist){
+    if(DIST && DIST.samples60.length>10){
+      distUsed=true;
+      distOffset=Math.floor(rnd()*DIST.samples60.length);
+      segs.forEach(sg=>{ if(!CONDITIONS[sg.cond].dist) return;
+        for(let n=sg.n0;n<sg.n1;n++) dArr[n]=DIST.samples60[(distOffset+n)%DIST.samples60.length];
+      });
+    } else {
+      deviation('disturbance','No disturbance trace loaded — block ran with zero disturbance');
+    }
+  }
+
+  Eng.active=true; Eng.i=i; Eng.step=step; Eng.N=N; Eng.n=0; Eng.e=0; Eng.uPending=0;
+  Eng.err=new Float32Array(N); Eng.d=dArr; Eng.inputs=[]; Eng.sched=sched; Eng.pertI=0;
+  Eng.segs=segs; Eng.rnd=rnd; Eng.clamped=0; Eng.onDone=onDone;
+  /* S2.18 needs the >0.5 Hz band variance of the tracked variable AND of the
+     error signal, regressed on the known injected variance. Under a
+     compensatory display with the target fixed at centre those two series are
+     the same up to sign, which is exactly the degeneracy S2.18's artifact
+     signature warns about ("the estimator recovering d(t) trivially because
+     the plant passes it through unchanged — check against the error signal as
+     well as the tracked variable"). All four channels are metered and emitted
+     under their protocol names so the analysis verifies the identity instead
+     of inheriting an assumption, and the control output supplies the
+     operator-side channel the check actually needs. */
+  Eng.meterE=makeBandMeter();   // error signal  (target − cursor)
+  Eng.meterX=makeBandMeter();   // tracked variable (cursor position)
+  Eng.meterU=makeBandMeter();   // control output (participant impulses)
+  Eng.meterD=makeBandMeter();   // known injected disturbance — ground truth
+  Eng.acc=0; Eng.last=null; Eng.jitter=[]; Eng.gaps=[]; Eng.startMs=performance.now(); Eng.startedAt=nowISO();
+  Eng.distMeta = distUsed ? {used:true, offsetSample:distOffset, name:DIST.meta.name, surrogate:!!DIST.meta.surrogate,
+                             correlationTimeS:DIST.meta.correlationTimeS} : {used:false};
+  Eng.phi=Math.exp(-P('plantLambda')*PROTOCOL.dt);
+  Eng.nback = segs.some(s=>CONDITIONS[s.cond].load) ? startNback(segs.filter(s=>CONDITIONS[s.cond].load)) : null;
+  Eng.pertCount=0;
+
+  const loop=(ts)=>{
+    if(!Eng.active) return;
+    if(Eng.last==null) Eng.last=ts;
+    let delta=ts-Eng.last; Eng.last=ts;
+    if(delta>0 && delta<500) Eng.jitter.push(delta);
+    /* A backgrounded tab is a real gap in the record, not samples to invent.
+       Part 4: "check the input stream for an unlogged pause". */
+    if(delta>=500){ Eng.gaps.push({atSample:Eng.n, ms:Math.round(delta)}); delta=1000/PROTOCOL.fs; }
+    Eng.acc+=delta;
+    const stepMs=1000/PROTOCOL.fs;
+    let guard=0;
+    while(Eng.acc>=stepMs && Eng.n<Eng.N && guard<20){ engTick(); Eng.acc-=stepMs; guard++; }
+    if(Eng.acc>stepMs*20) Eng.acc=0;
+    engDraw();
+    if(Eng.n>=Eng.N){ engFinish(); return; }
+    Eng.raf=requestAnimationFrame(loop);
+  };
+  Eng.raf=requestAnimationFrame(loop);
+}
+function currentSeg(){ for(let k=0;k<Eng.segs.length;k++){ if(Eng.n>=Eng.segs[k].n0 && Eng.n<Eng.segs[k].n1) return Eng.segs[k]; } return Eng.segs[Eng.segs.length-1]; }
+function engTick(){
+  const n=Eng.n;
+  const u=Eng.uPending;
+  const w=gaussFrom(Eng.rnd)*P('motorNoiseSD');
+  let e=Eng.phi*Eng.e + Eng.d[n] + w + u;
+  Eng.uPending=0;
+  while(Eng.pertI<Eng.sched.onsets.length && n>=Eng.sched.onsets[Eng.pertI].nIdx){
+    const o=Eng.sched.onsets[Eng.pertI];
+    e += o.dir*P('pertAmp');
+    o.realisedSample=n; o.realisedTS=+(n/PROTOCOL.fs).toFixed(4);
+    Eng.pertI++; Eng.pertCount++;
+    /* No haptic cue on onset. navigator.vibrate is unavailable on iOS
+       Safari, so v3's buzz made the perturbation stimulus differ by device
+       within a within-participant design. The displacement is the stimulus. */
+  }
+  const lim=P('clampAbs');
+  if(e>lim){ e=lim; Eng.clamped++; } else if(e<-lim){ e=-lim; Eng.clamped++; }
+  Eng.e=e; Eng.err[n]=e;
+  /* Target is fixed at centre, so tracked variable = cursor = e and the error
+     signal = 0 − e. Metered separately; variance is identical by construction
+     and the record says so rather than omitting the second channel. */
+  Eng.meterE.push(-e); Eng.meterX.push(e); Eng.meterU.push(u); Eng.meterD.push(Eng.d[n]);
+  Eng.n++;
+  if(Eng.nback) nbackTick();
+}
+function engInput(dir, source){
+  if(!Eng.active) return;
+  Eng.uPending += dir*P('impulseAmp');
+  Eng.inputs.push({n:Eng.n, tS:+(Eng.n/PROTOCOL.fs).toFixed(4), dir, src:source||'touch'});
+  const b=document.getElementById(dir<0?'imp-left':'imp-right');
+  if(b){ b.classList.add('fired'); setTimeout(()=>b.classList.remove('fired'),70); }
+}
+function engDraw(){
+  drawDot(document.getElementById('track-canvas'), Eng.e);
+  const td=document.getElementById('t-display');
+  if(td) td.textContent=fmtClock((Eng.N-Eng.n)/PROTOCOL.fs);
+  /* Counters are familiarisation feedback, shown in practice only. A live
+     correction count during a data block invites the participant to
+     minimise it, which changes strategy over the induction and interacts
+     with exactly the trajectory §8.6 is measuring. */
+  if(Eng.n%30===0 && Eng.step && Eng.step.k==='practice'){
+    const zs=document.getElementById('zone-stat');
+    if(zs) zs.textContent=Eng.inputs.length+' corrections';
+    const bs=document.getElementById('bump-stat');
+    if(bs) bs.textContent=Eng.pertCount+'/'+Eng.sched.onsets.length+' perturbations';
+  }
+}
+function engFinish(){
+  const step=Eng.step, i=Eng.i, durS=Eng.N/PROTOCOL.fs;
+  const wallS=(performance.now()-Eng.startMs)/1000;
+  engStop();
+  const err=Eng.err, sch=Eng.sched;
+  const jit=Eng.jitter.slice().sort((a,b)=>a-b);
+  const jitStats=jit.length?{medianMs:+jit[Math.floor(jit.length/2)].toFixed(2),
+    p95Ms:+jit[Math.floor(jit.length*0.95)].toFixed(2), maxMs:+jit[jit.length-1].toFixed(2), n:jit.length}:null;
+
+  /* Segment premise, with the fix v3 lacked: a perturbation late in one
+     segment excludes samples from the start of the next, so onsets are
+     selected by whether their fit window OVERLAPS the segment, not by
+     whether the onset itself falls inside it. v3 filtered on the onset and
+     leaked up to 5 s of fit-window samples into the following segment's
+     "perturbation-free" estimate. */
+  const exclS=PROTOCOL.fitWindowS+PROTOCOL.premiseTailS;
+  const perSeg=Eng.segs.map(sg=>{
+    const sub=err.subarray(sg.n0,sg.n1);
+    const t0=sg.n0/PROTOCOL.fs, t1=sg.n1/PROTOCOL.fs;
+    const ons=sch.onsets.filter(o=>o.tS<t1 && o.tS+exclS>t0).map(o=>({nIdx:o.nIdx-sg.n0, tS:o.tS-t0}));
+    const ins=Eng.inputs.filter(e=>e.tS>=t0 && e.tS<t1).map(e=>({tS:e.tS-t0}));
+    return {cond:sg.cond, durS:+(t1-t0).toFixed(1),
+      premise:sdlpPremise(sub, ons), deployment:{mean:sdlpDeployment(sub).mean},
+      fitWindow:fitWindowStats(sub, ons),
+      onsetsOverlapping:ons.length,
+      intercorrection:intercorrection(ins, t1-t0)};
+  });
+
+  const vE=Eng.meterE.variance(), vX=Eng.meterX.variance(), vU=Eng.meterU.variance(), vD=Eng.meterD.variance();
+  const ex=v=>v!=null?+v.toExponential(5):null;
+
+  const value={
+    cond: step.k==='practice' ? 'practice' : step.cond,
+    phase: step.phase||step.k,
+    durationS:+durS.toFixed(1),
+    startedAt:Eng.startedAt, endedAt:nowISO(),
+    realisedWallClockS:+wallS.toFixed(2),
+    premise: sdlpPremise(err, sch.onsets),
+    deployment: sdlpDeployment(err),
+    fitWindow: fitWindowStats(err, sch.onsets),           // S2.1b
+    intercorrection: intercorrection(Eng.inputs, durS),
+    perturbations:{planned:sch.onsets.length, delivered:Eng.pertCount,
+      allDelivered:Eng.pertCount===sch.onsets.length,
+      quietHistoryN:sch.quietHistoryN, recentHistoryN:sch.recentHistoryN,
+      pairs:sch.pairs, singletons:sch.singletons, jitterRefixed:sch.jitterRefixed,
+      preSpecified:!!sch.preSpecified,
+      predictedFreeS:sch.predictedFreeS, groupsPerMin:sch.groupsPerMin,
+      sequenceGroupsPerMin:sch.sequenceGroupsPerMin, sequencePairsPerMin:sch.sequencePairsPerMin,
+      pairsPerGapWindow:sch.pairsPerGapWindow,
+      ruleNineteen: sch.ruleNineteen || null},
+    /* S2.18 — all four channels under their protocol names. */
+    proxy:{bandHz:[P('proxyBandLowHz'),P('proxyBandHighHz')],
+      errorSignalVar: ex(vE),
+      trackedVariableVar: ex(vX),
+      controlOutputVar: ex(vU),
+      injectedDisturbanceVar: ex(vD),
+      targetPosition:0,
+      channelsIdentical:true,
+      note:'§1.2 requires the >0.5 Hz band variance of the tracked variable AND the error signal. Under a compensatory display with the target fixed at centre these are the same series up to sign, so their variances are equal by construction — emitted separately so S2.18 verifies the identity rather than inheriting it. Control output is the operator-side channel the S2.18 artifact-signature check needs; the full input stream is stored alongside.'},
+    /* S2.14 — required, not optional. Emitted; applied in analysis. */
+    preOnsetVelocity:{
+      windowS:P('preOnsetVelWindowS'), pctile:P('preOnsetVelPctile'),
+      perOnset: preOnsetVelocities(err, sch.onsets),
+      premiseDistribution: premiseVelocityDistribution(err, sch.onsets),
+      note:'S2.14 pre-onset velocity exclusion. The threshold is this participant\'s BASELINE-block distribution at the configured percentile and is applied downstream, never here — a threshold read off the block it is applied to is not a threshold (Standing Rule 3). Report exclusion rate by condition and by history.'},
+    disturbance: Eng.distMeta,
+    timing:{nominalHz:PROTOCOL.fs, sampleClockS:+durS.toFixed(2), wallClockS:+wallS.toFixed(2),
+      clockDriftS:+(wallS-durS).toFixed(2), frameJitter:jitStats, gaps:Eng.gaps, clampedSamples:Eng.clamped},
+    nback: Eng.nback ? nbackSummary() : null,
+    segments: step.segments ? perSeg : null
+  };
+  if(step.phase==='induction'){
+    const win=windowSeries(err, Eng.inputs, sch.onsets, durS, PROTOCOL.inductionWindowS, PROTOCOL.inductionStrideS);
+    value.inductionWindows={
+      windowS:PROTOCOL.inductionWindowS, strideS:PROTOCOL.inductionStrideS,
+      oneMin: win,
+      standardScored:{
+        sdlpPremise: standardScore(win,'sdlpPremise'),
+        sdlpDeployment: standardScore(win,'sdlpDeployment'),
+        cv: standardScore(win,'cv')
+      },
+      historyGapWindows: gapWindowCensus(sch.onsets, durS),
+      note:'§8.6. SDLP and inter-correction CV on 1-minute windows, standard-scored against minutes two and three. The history gap is fitted in analysis on 3-minute windows with a 1-minute stride; the realised pair count per window is reported here so power is re-derived at the achieved count.'
+    };
+  }
+  /* §8.2 "disturbance amplitude and load difficulty confirmed against the
+     participant's own baseline". Confirmation, not calibration: the numbers
+     are compared to the pilot-fixed target and a miss is logged. No
+     parameter moves, in any mode, ever. */
+  if(step.k==='practice' && P('sdlpTargetIncreasePct')>0){
+    const seg=value.segments||[];
+    const b=seg.find(x=>x.cond==='base');
+    const tgt=P('sdlpTargetIncreasePct'), band=P('practiceConfirmBandPct');
+    value.practiceConfirmation={targetIncreasePct:tgt, bandPct:band, checks:[], note:
+      'Confirmation only. A 60 s segment yields roughly 30-35 s of premise, so the band is wide and a miss is a flag for the operator, not a verdict and not a reason to change anything. G1 is scored across the pilot on full 300 s blocks.'};
+    ['road','load'].forEach(c=>{
+      const x=seg.find(y=>y.cond===c);
+      const inc=(x&&b&&b.premise.sdlp)?+(((x.premise.sdlp-b.premise.sdlp)/b.premise.sdlp)*100).toFixed(1):null;
+      const within = inc!=null && Math.abs(inc-tgt)<=band;
+      value.practiceConfirmation.checks.push({cond:c, increasePct:inc, within});
+      if(inc!=null && !within)
+        deviation('calibration','Practice '+c+' SDLP-premise increase '+inc+'% against a pilot target of '+tgt+
+          '% (band ±'+band+'%). Recorded and NOT corrected — parameters do not move inside a session.');
+      if(inc==null)
+        deviation('calibration','Practice '+c+' segment produced no comparable SDLP-premise increase — confirmation could not be made');
+    });
+  }
+  if(Eng.gaps.length) deviation('timing', Eng.gaps.length+' frame gap(s) ≥500 ms during '+step.title+' — the page was backgrounded or the device slept');
+  if(Eng.clamped>0) deviation('clamping', Eng.clamped+' sample(s) at the display bound during '+step.title);
+  if(Math.abs(wallS-durS)>PROTOCOL.clockToleranceS)
+    deviation('timing','"'+step.title+'" ran '+wallS.toFixed(1)+' s of wall clock against '+durS.toFixed(1)+
+      ' s of samples — the sample clock fell behind real time and the series is shorter in seconds than it appears');
+  if(Eng.pertCount!==sch.onsets.length)
+    deviation('perturbation','Delivered '+Eng.pertCount+' of '+sch.onsets.length+' scheduled onsets during '+step.title);
+  if(value.premise.durationS<PROTOCOL.premiseFloorS && durS>=PROTOCOL.blockS)
+    deviation('premise','Realised perturbation-free sample '+value.premise.durationS+' s is below the 150 s floor');
+
+  const payload={
+    step:i, cond:value.cond, fs:PROTOCOL.fs, durationS:value.durationS,
+    codec:{type:'int16-base64', scale:1000, endian:'little',
+      decode:'atob → Uint8Array → Int16Array (little-endian) → divide by scale'},
+    error:encodeI16(err,1000),
+    disturbance: Eng.distMeta.used ? encodeI16(Eng.d,1000) : null,
+    inputs:Eng.inputs, schedule:sch,
+    nbackEvents: Eng.nback ? Eng.nbackLog : null
+  };
+  putBlock(i, payload);
+
+  const st=S.steps[i];
+  st.value=value;
+  log(step.title+' complete — SDLP-premise '+(value.premise.sdlp!=null?value.premise.sdlp:'—')+
+      ' over '+value.premise.durationS+' s, '+value.intercorrection.n+' corrections');
+  if(Eng.onDone) Eng.onDone(value); else completeStep(i);
+}
+
+function drawDot(canvas, e){
+  if(!canvas) return;
+  const w=canvas.clientWidth||300, h=90;
+  if(canvas.width!==w) canvas.width=w;
+  if(canvas.height!==h) canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const midY=h/2, range=(w/2)-22;
+  const x=w/2 + (e/P('clampAbs'))*range;
+  const off=Math.min(1, Math.abs(e)/2.2);
+  ctx.beginPath(); ctx.arc(w/2, midY, 22, 0, Math.PI*2);
+  ctx.strokeStyle=cssvar('--card3'); ctx.lineWidth=6; ctx.stroke();
+  const c1=hexToRgb(cssvar('--accent')), c2=hexToRgb(cssvar('--warn'));
+  const mix=c1.map((v,i)=>Math.round(v+(c2[i]-v)*off));
+  ctx.beginPath(); ctx.arc(x, midY, 13+off*3, 0, Math.PI*2);
+  ctx.fillStyle='rgb('+mix.join(',')+')'; ctx.fill();
+}
+function hexToRgb(hex){
+  hex=(hex||'#2c6e68').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const n=parseInt(hex,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+
+/* ══ AUDITORY n-BACK ══════════════════════════════════════════════
+   §1.2: concurrent auditory 2-back, tracking parameters unchanged. The
+   load is carried entirely in the auditory channel and one extra button;
+   the plant, the noise, the impulse size and the schedule are identical
+   to baseline. ════════════════════════════════════════════════════ */
+const NB_LETTERS=['B','F','H','K','M','Q','R','X'];
+let audioCtx=null, voiceMode='speech';
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } }
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+}
+function speechAvailable(){ try{ return typeof speechSynthesis!=='undefined' && speechSynthesis.getVoices().length>0; }catch(e){ return false; } }
+function sayLetter(ch){
+  if(voiceMode==='speech' && speechAvailable()){
+    try{ const u=new SpeechSynthesisUtterance(ch); u.rate=0.95; u.volume=1; speechSynthesis.speak(u); return; }catch(e){}
+  }
+  ensureAudio();
+  if(!audioCtx) return;
+  const idx=Math.max(0,NB_LETTERS.indexOf(ch));
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.frequency.value=330*Math.pow(2, idx/12); o.type='sine';
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.35);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.4);
+}
+function startNback(loadSegs){
+  Eng.nbackLog=[]; Eng.nbSeq=[]; Eng.nbNext=null; Eng.nbSegs=loadSegs;
+  /* falseAlarms counts responses to a non-target stimulus, so the rate has
+     non-targets as its denominator and cannot exceed 1. Responses with no
+     stimulus pending are commission errors and are counted separately — v3
+     folded them together, which could drive d' off a cliff. */
+  Eng.nbStats={stim:0, targets:0, hits:0, misses:0, falseAlarms:0, spurious:0};
+  Eng.nbAwait=null;
+  const isi=Math.round(P('nbackIsiS')*PROTOCOL.fs);
+  Eng.nbIsi=isi;
+  Eng.nbNextN=loadSegs[0].n0+isi;
+  if(voiceMode==='speech' && !speechAvailable()) deviation('nback','Speech synthesis unavailable — auditory stimuli delivered as tones');
+  return true;
+}
+function nbackInSeg(){ return Eng.nbSegs.some(s=>Eng.n>=s.n0 && Eng.n<s.n1); }
+function nbackTick(){
+  if(!nbackInSeg()) return;
+  if(Eng.nbAwait && Eng.n - Eng.nbAwait.n > Eng.nbIsi){
+    if(Eng.nbAwait.isTarget){ Eng.nbStats.misses++; flashNb(false); }
+    Eng.nbAwait=null;
+  }
+  if(Eng.n>=Eng.nbNextN){
+    const rnd=Eng.rnd, lvl=P('nbackLevel');
+    let ch;
+    const canTarget=Eng.nbSeq.length>=lvl;
+    const isTarget = canTarget && rnd()<P('nbackTargetRate');
+    if(isTarget) ch=Eng.nbSeq[Eng.nbSeq.length-lvl];
+    else{
+      do{ ch=NB_LETTERS[Math.floor(rnd()*NB_LETTERS.length)]; }
+      while(canTarget && ch===Eng.nbSeq[Eng.nbSeq.length-lvl]);
+    }
+    Eng.nbSeq.push(ch);
+    Eng.nbStats.stim++; if(isTarget) Eng.nbStats.targets++;
+    const ev={n:Eng.n, tS:+(Eng.n/PROTOCOL.fs).toFixed(3), letter:ch, isTarget, responded:false, rtMs:null};
+    Eng.nbackLog.push(ev);
+    Eng.nbAwait=ev;
+    sayLetter(ch);
+    const cue=document.getElementById('nb-cue');
+    if(cue) cue.textContent='listening · '+Eng.nbStats.stim+' heard';
+    Eng.nbNextN=Eng.n+Eng.nbIsi;
+  }
+}
+function nbackRespond(){
+  if(!Eng.active || !Eng.nback) return;
+  const ev=Eng.nbAwait;
+  if(!ev){ Eng.nbStats.spurious++; flashNb(false); return; }
+  if(ev.responded) return;
+  ev.responded=true; ev.rtMs=Math.round((Eng.n-ev.n)*1000/PROTOCOL.fs);
+  if(ev.isTarget){ Eng.nbStats.hits++; flashNb(true); }
+  else{ Eng.nbStats.falseAlarms++; flashNb(false); }
+  Eng.nbAwait=null;
+  const sc=document.getElementById('nb-score');
+  if(sc) sc.textContent=Eng.nbStats.hits+'/'+Eng.nbStats.targets;
+}
+/* Feedback is familiarisation, not part of the manipulation. §1.2 specifies
+   a concurrent auditory 2-back with tracking parameters unchanged; per-
+   response colour and haptics would be an additional visual and tactile
+   channel present only in the load condition, and a running score changes
+   effort allocation. Both are confined to the practice step. */
+function nbackFeedbackAllowed(){ return !!(Eng.step && Eng.step.k==='practice'); }
+function flashNb(ok){
+  if(!nbackFeedbackAllowed()) return;
+  const row=document.getElementById('nbrow');
+  if(!row) return;
+  row.classList.remove('flash-ok','flash-bad'); void row.offsetWidth;
+  row.classList.add(ok?'flash-ok':'flash-bad');
+  buzz(ok?15:45);
+}
+function nbackSummary(){
+  const s=Eng.nbStats, rts=Eng.nbackLog.filter(e=>e.rtMs!=null).map(e=>e.rtMs).sort((a,b)=>a-b);
+  const hitRate=s.targets?s.hits/s.targets:null;
+  const nonTargets=s.stim-s.targets;
+  const faRate=nonTargets?s.falseAlarms/nonTargets:null;
+  const z=p=>{ p=Math.min(1-1/(2*Math.max(1,s.stim)), Math.max(1/(2*Math.max(1,s.stim)), p));
+    /* Acklam inverse-normal, adequate for a reported d' */
+    const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+    const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+    const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+    const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+    const pl=0.02425;
+    let q,r;
+    if(p<pl){ q=Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if(p<=1-pl){ q=p-0.5; r=q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+    q=Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  };
+  return {level:P('nbackLevel'), isiS:P('nbackIsiS'), modality: (voiceMode==='speech'&&speechAvailable())?'speech':'tones',
+    stimuli:s.stim, targets:s.targets, nonTargets:nonTargets, hits:s.hits, misses:s.misses,
+    falseAlarms:s.falseAlarms, spuriousResponses:s.spurious,
+    feedbackShown:nbackFeedbackAllowed(),
+    hitRate:hitRate!=null?+hitRate.toFixed(3):null, faRate:faRate!=null?+faRate.toFixed(3):null,
+    dPrime:(hitRate!=null&&faRate!=null)?+(z(hitRate)-z(faRate)).toFixed(3):null,
+    medianRtMs:rts.length?rts[Math.floor(rts.length/2)]:null,
+    note:'falseAlarms are responses to a non-target stimulus; spuriousResponses are presses with nothing pending and are excluded from the false-alarm rate.'};
+}
+
+/* ══ STORAGE ══════════════════════════════════════════════════════ */
+function save(){ try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} }
+function loadSession(){
+  try{
+    const raw=localStorage.getItem(SKEY); if(!raw) return;
+    const rec=JSON.parse(raw);
+    if(rec && rec.schemaVersion===5 && Array.isArray(rec.steps)){
+      S=rec; STEPS=buildSteps(S.orderIndex);
+      if(S.steps.length!==STEPS.length) { S=BLANK(); initSteps(); }
+    }
+  }catch(e){}
+}
+function initSteps(){
+  STEPS=buildSteps(S.orderIndex);
+  S.steps=STEPS.map(()=>({status:'locked', startedAt:null, endedAt:null, value:null}));
+  S.steps[0].status='current';
+  S.current=0;
+}
+function resetAll(){
+  engStop(); stopTicker(); clearBlocks();
+  S=BLANK(); S.seed=(Date.now()^hashStr(String(Math.random())))>>>0;
+  initSteps(); save();
+}
+
+/* ══ SAVE / EXPORT ════════════════════════════════════════════════ */
+async function saveFile(filename, text, mime){
+  if(window.claude && typeof window.claude.use==='function'){
+    try{
+      const downloads=await window.claude.use('downloads');
+      if(!downloads) return {ok:false, reason:'Downloads aren\u2019t available in this view.'};
+      await downloads.save({filename, data:text});
+      return {ok:true};
+    }catch(e){ return {ok:false, reason:'The save prompt was declined or failed.'}; }
+  }
+  try{
+    const blob=new Blob([text],{type:mime||'application/json'});
+    const url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1000);
+    return {ok:true};
+  }catch(e){ return {ok:false, reason:'Your browser blocked the download.'}; }
+}
+
+/* Direct-to-Drive. Apps Script web-app URL; see StadyHands_DriveUpload.gs. */
+const DRIVE_ENDPOINT='https://script.google.com/macros/s/AKfycbxEhBHmNr6-a9BykSdzIMwptqnhUGzIeMOmh5m0MyWEeFyEnSSY-avhqHedqO77MxDimA/exec';
+
+/* S2.1b at session level — the residual between cells after SDLP-premise
+   matching, which is a cross-condition quantity a single block cannot
+   supply. Baseline is the early-phase baseline block. */
+function residualS21b(){
+  const cells={};
+  STEPS.forEach((s,i)=>{ const v=S.steps[i].value;
+    if(s.k==='track' && v && v.premise && v.premise.sdlp!=null)
+      cells[s.cond]={premise:v.premise.sdlp, premiseDurationS:v.premise.durationS,
+        deployment:v.deployment?v.deployment.mean:null,
+        fitWindowShare:v.fitWindow?v.fitWindow.shareOfBlockVariance:null}; });
+  const b=cells.base;
+  const rows=Object.keys(cells).map(c=>{
+    const x=cells[c];
+    return {cond:c, sdlpPremise:x.premise, sdlpDeployment:x.deployment,
+      premiseDurationS:x.premiseDurationS, fitWindowVarianceShare:x.fitWindowShare,
+      premiseDeltaFromBaseline: (b&&b.premise)? +((x.premise-b.premise)).toFixed(4) : null,
+      deploymentDeltaFromBaseline: (b&&b.deployment!=null&&x.deployment!=null)? +((x.deployment-b.deployment)).toFixed(4) : null,
+      residualAfterPremiseMatching: (b&&b.premise&&b.deployment!=null&&x.deployment!=null)
+        ? +((x.deployment-b.deployment)-(x.premise-b.premise)).toFixed(4) : null};
+  });
+  return {baselineCell:'base', rows,
+    note:'S2.1b. Residual is the SDLP-deployment offset that survives SDLP-premise matching. Expected positive in the fatigued cell: the probe assists the statistic under criticism, so any advantage the corrected rules show in S3 is a lower bound.'};
+}
+/* Schedule density, checked rather than asserted. §1.2 requires the pair
+   schedule to continue through the induction "at constant density"; the
+   quantity that must match is the density inside the sequence, since a
+   block is diluted by its lead-in and lead-out. */
+/* §1.2: "The same pair schedule continues through the 22-min induction at
+   constant density." The quantity actually held constant is the inter-group
+   onset cycle and the pair proportion, so that is what is compared. A
+   pairs-per-minute ratio computed over each sequence span is NOT comparable
+   between them: a 10-group block spans nine inter-group intervals and so
+   reads about 5% high, while the induction's many intervals converge on the
+   true rate. Comparing those two numbers would fail a schedule that is in
+   fact identical. Both are reported; the gate runs on the cycle. */
+function meanGroupCycle(sch){
+  if(!sch.groups || sch.groups.length<2) return null;
+  const f=sch.groups[0].tS, l=sch.groups[sch.groups.length-1].tS;
+  return (l-f)/(sch.groups.length-1);
+}
+function densityCheck(){
+  const base=(S.seed^hashStr('densitycheck'))>>>0;
+  /* A single 300 s block holds nine jitter draws, so its realised cycle has
+     a standard error near 2%. Average across seeds for a stable comparator. */
+  let cyc=0, pp=0, ppm=0, reps=200;
+  for(let k=0;k<reps;k++){
+    const b=buildSchedule(PROTOCOL.blockS, (base+k)>>>0, {maxGroups:PROTOCOL.groupsPerBlock});
+    cyc+=meanGroupCycle(b); pp+=b.pairs/b.groups.length; ppm+=b.sequencePairsPerMin;
+  }
+  const blockCycle=cyc/reps, blockPairProp=pp/reps, blockPPM=ppm/reps;
+  const ind=buildSchedule(PROTOCOL.inductionS, base, {});
+  const indCycle=meanGroupCycle(ind), indPairProp=ind.pairs/ind.groups.length;
+  const relC=Math.abs(indCycle-blockCycle)/blockCycle;
+  const relP=Math.abs(indPairProp-blockPairProp)/blockPairProp;
+  return {
+    blockMeanGroupCycleS:+blockCycle.toFixed(3), inductionMeanGroupCycleS:+indCycle.toFixed(3),
+    blockPairProportion:+blockPairProp.toFixed(3), inductionPairProportion:+indPairProp.toFixed(3),
+    cycleRelativeDifference:+relC.toFixed(4), pairProportionRelativeDifference:+relP.toFixed(4),
+    withinFivePercent: relC<=0.05 && relP<=0.05,
+    blockPairsPerMin:+blockPPM.toFixed(3), inductionPairsPerMin:ind.sequencePairsPerMin,
+    blockPairsPerGapWindow:+(blockPairProp*(60/blockCycle)*(PROTOCOL.gapWindowS/60)).toFixed(2),
+    inductionPairsPerGapWindow:ind.pairsPerGapWindow,
+    jitterS:[PROTOCOL.jitterMinS,PROTOCOL.jitterMaxS], pairIntervalS:PROTOCOL.pairIntervalS,
+    note:'Gate is on the inter-group cycle and pair proportion. The pairs-per-minute figures are descriptive only: a block reads about 5% high because ten groups span nine intervals, which is an artefact of the measure rather than of the schedule. Pairs per 3-minute window is reported because §8.6 sized that window on an assumed nine.'};
+}
+function buildExport(){
+  const blocks={};
+  STEPS.forEach((s,i)=>{ if(s.k==='track'||s.k==='practice'){ const b=getBlock(i); if(b) blocks[i]=b; } });
+  const arith=sessionArithmetic(STEPS);
+  return {
+    protocol:Object.assign({}, PROTOCOL, {conformance:'Study 2 session runner v4.0, built to Analysis Protocol v16 §1.2 and Proposal v16 §8.2–8.2b'}),
+    exportedAt:nowISO(),
+    mode:S.mode,
+    /* Appendix C: "No identifiable data." There is no identifiers block,
+       because no identifier is collected. The participant code is a
+       function of the participant number and nothing else. */
+    identifiability:{containsIdentifiers:false,
+      note:'No name, no free-text participant field, no video, audio or biometric identifier is collected at any point. The participant code is derived from the participant number only.'},
+    participant:{code:S.code, participantNo:S.setup.participantNo, orderIndex:S.orderIndex, order:ORDERS[S.orderIndex%6]},
+    setup:{ethicsRef:S.setup.ethicsRef, ethicsApprovalDate:S.setup.ethicsDate,
+           preregistrationRef:S.setup.preregRef, preregistrationDate:S.setup.preregDate,
+           operator:S.setup.operator, seed:S.seed,
+           gapPowerRederivationRef:S.setup.gapPowerRef, gapPowerRederivationDate:S.setup.gapPowerDate},
+    parameters:paramSnapshot(),
+    disturbanceTrace:S.dist||null,
+    environment:S.env||null,
+    schedule:{sessionArithmetic:arith, densityCheck:densityCheck(), steps:STEPS.map((s,i)=>({
+      index:i, kind:s.k, title:s.title, nominalDurationS:s.dur||0, phase:s.phase||null,
+      condition:s.cond||null, boundary:s.boundary||null, point:s.point||null,
+      fixedTo:s.fixedTo||null,
+      status:S.steps[i].status, startedAt:S.steps[i].startedAt, endedAt:S.steps[i].endedAt,
+      restarts:S.steps[i].restarts||0,
+      realisedBreakS:S.steps[i].realisedBreakS!=null?S.steps[i].realisedBreakS:null,
+      value:S.steps[i].value}))},
+    series:blocks,
+    manipulationCheck:manipulationCheck(),
+    residual:residualS21b(),
+    breaksOffered:S.breaks,
+    completion:{completedSuccessfully:S.completedSuccessfully, withdrawn:S.withdrawn,
+                withdrawnAtPhase:S.withdrawnAtPhase, startedAt:S.startedAt},
+    logbook:{log:S.log, deviations:S.deviations, abandonedAnalyses:S.abandoned, calibrationIterations:S.calibration}
+  };
+}
+function exportSession(){
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const filename='steadyhands_s2_'+(S.code||'session')+'_'+stamp+'.json';
+  return saveFile(filename, JSON.stringify(buildExport(),null,1), 'application/json').then(res=>{
+    if(res.ok) log('Session file saved');
+    else{
+      log('Save failed — '+res.reason);
+      openModal('<h3>Could not save</h3><p>'+esc(res.reason)+'</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      const b=document.getElementById('m-close'); if(b) b.onclick=closeModal;
+    }
+    return res.ok;
+  });
+}
+async function saveToDrive(){
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const filename='steadyhands_s2_'+(S.code||'session')+'_'+stamp+'.json';
+  const rec=buildExport();
+  /* Belt and braces. Nothing leaves this device over the network if an
+     identifier block has reappeared — Appendix C is categorical, and an
+     upload is the one operation that cannot be undone. */
+  if(rec.identifiers || (rec.identifiability && rec.identifiability.containsIdentifiers)){
+    deviation('privacy','Upload blocked — the export carried an identifier block');
+    log('Upload blocked — saved to this device instead'); exportSession(); return false;
+  }
+  const content=JSON.stringify(rec,null,1);
+  if(!DRIVE_ENDPOINT){ log('Drive endpoint not configured — saved to this device instead'); exportSession(); return false; }
+  try{
+    const res=await fetch(DRIVE_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({filename,content})});
+    const data=await res.json().catch(()=>null);
+    if(data && data.ok){ log('Saved to Drive — '+filename); return true; }
+    log('Drive save did not confirm — saved to this device as a backup'); exportSession(); return false;
+  }catch(err){
+    log('Could not reach Drive — saved to this device as a backup'); exportSession(); return false;
+  }
+}
+
+/* ══ MANIPULATION CHECK (G2) ══════════════════════════════════════
+   §1.2: fatigue confirmed by KSS and PVT, never assumed from clock
+   time. Computed here so the operator sees it before leaving. ════ */
+function manipulationCheck(){
+  const kss=[], pvt=[];
+  STEPS.forEach((s,i)=>{ const st=S.steps[i];
+    if(s.k==='kss' && st.value && st.value.kss!=null) kss.push({boundary:s.boundary, value:st.value.kss, at:st.endedAt});
+    if(s.k==='pvt' && st.value) pvt.push({point:s.point, medianRT:st.value.medianRT, lapses:st.value.lapses});
+  });
+  const first=kss.length?kss[0].value:null;
+  const postInduction=(kss.find(k=>k.boundary==='induction-end')||{}).value;
+  const kssRise=(first!=null&&postInduction!=null)?postInduction-first:null;
+  const p0=pvt.find(p=>p.point==='early-phase-end'), p1=pvt.find(p=>p.point==='session-end');
+  const rtDelta=(p0&&p1&&p0.medianRT!=null&&p1.medianRT!=null)?p1.medianRT-p0.medianRT:null;
+  const lapseDelta=(p0&&p1)?(p1.lapses-p0.lapses):null;
+  const pass = kssRise!=null && kssRise>=2 && rtDelta!=null && (rtDelta>0 || (lapseDelta!=null && lapseDelta>0));
+
+  /* G2 is read four ways, not one. The other three readings turn on what
+     disturbance and load did to KSS, which the early-phase ratings already
+     hold. PVT is sampled only at the two points §1.2 specifies, so the
+     early-phase PVT is a single shared post-condition reading and the
+     limitation is stated rather than papered over. */
+  const kssAfter=(cond)=>{
+    const i=STEPS.findIndex(s=>s.k==='track'&&s.cond===cond);
+    if(i<0) return null;
+    for(let j=i+1;j<STEPS.length;j++){
+      if(STEPS[j].k==='kss'){ const v=S.steps[j].value; return v&&v.kss!=null?v.kss:null; }
+      if(STEPS[j].k==='track'&&STEPS[j].cond!=='removal') return null;
+    }
+    return null;
+  };
+  const conditionReads=['road','load'].map(c=>{
+    const after=kssAfter(c), d=(after!=null&&first!=null)?after-first:null;
+    return {condition:c, kssAfterBlock:after, kssDeltaFromStart:d,
+      reading: d==null ? 'incomplete'
+        : (d>=2 ? 'raises KSS — read against the early-phase PVT: if PVT is also degraded this manipulation is genuinely fatiguing and impure; if PVT is intact this is misattribution and a result (S2.9), not a failure'
+                : 'KSS not materially raised by this manipulation')};
+  });
+  const lateUnmoved = (kssRise!=null && kssRise<2 && rtDelta!=null && rtDelta<=0);
+
+  return {gate:'G2', kssSeries:kss, pvt:pvt, kssRise, pvtMedianRtDeltaMs:rtDelta, pvtLapseDelta:lapseDelta,
+    criterion:'Fatigue: KSS rises ≥2 points and PVT degrades',
+    result: (kssRise==null||rtDelta==null) ? 'incomplete' : (pass?'induction confirmed':'not confirmed — read four ways, §G2'),
+    reads:{
+      fatigue:{kssRise, pvtMedianRtDeltaMs:rtDelta, pvtLapseDelta:lapseDelta, meetsCriterion:pass},
+      disturbanceAndLoad:conditionReads,
+      misattribution:'Raised KSS with an intact PVT is misattribution and a result (S2.9), not a failed manipulation.',
+      compensation: lateUnmoved
+        ? 'Late blocks unmoved on KSS and PVT. Do NOT score this as a failed induction until the history gap has been read — it may be a compensation stage (S2.15, Standing Rule 15).'
+        : 'Not applicable on this session.'
+    },
+    pvtCoverage:'PVT is sampled at end of early phase and session end only (§1.2), so no per-condition PVT exists by design. The early-phase PVT is the shared post-condition reading for both disturbance and load.',
+    note:'Read four ways, never pass/fail. Ground truth is KSS/PVT, never the condition label (Standing Rule 6).'};
+}
+
+/* ══ RENDER ═══════════════════════════════════════════════════════ */
+function renderApp(){
+  document.getElementById('mainview').hidden = uiView!=='main';
+  document.getElementById('otherview').hidden = uiView==='main';
+  renderModeBar();
+  if(uiView==='main'){ render(); document.getElementById('hd-name').textContent = S.current>=STEPS.length?'Complete':(STEPS[S.current]?STEPS[S.current].title:'Steady Hands'); }
+  else if(uiView==='protocol'){ document.getElementById('hd-name').textContent='Protocol'; renderProtocolView(); }
+  else if(uiView==='params'){ document.getElementById('hd-name').textContent='Parameters'; renderParamsView(); }
+  else if(uiView==='p0'){ document.getElementById('hd-name').textContent='P0 checks'; renderP0View(); }
+  else if(uiView==='calib'){ document.getElementById('hd-name').textContent='Calibration'; renderCalibView(); }
+  else if(uiView==='analyze'){ document.getElementById('hd-name').textContent='Trace'; renderAnalyze(); }
+  updateElapsed();
+}
+function goMain(){ uiView='main'; renderApp(); }
+function renderModeBar(){
+  const el=document.getElementById('modebar');
+  const m=testMode?'test':S.mode;
+  el.className='modebar '+m;
+  el.textContent = m==='study' ? 'STUDY SESSION · DATA OF RECORD'
+    : m==='test' ? 'TESTING MODE · NOT DATA · SKIP ENABLED'
+    : 'PILOT / CALIBRATION · NOT A STUDY SESSION';
+}
+function render(){ renderStrip(); renderNow(); renderDoneList(); renderLog();
+  document.getElementById('hd-code').textContent = S.code ? S.code+' · order '+(S.orderIndex+1) : 'no participant yet'; }
+function updateElapsed(){
+  const el=document.getElementById('hd-elapsed');
+  el.textContent = S.startedAt ? fmtClock((Date.now()-new Date(S.startedAt).getTime())/1000) : '00:00';
+}
+function renderStrip(){
+  const host=document.getElementById('strip'); host.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const st=S.steps[i];
+    const b=document.createElement('button');
+    b.className='chip '+(st.status==='done'?'done':i===S.current?'now':'');
+    b.textContent = st.status==='done' ? '✓' : (i+1);
+    b.title=s.title;
+    if(st.status==='done') b.onclick=()=>peek(i);
+    host.appendChild(b);
+  });
+}
+function peek(i){
+  const s=STEPS[i], st=S.steps[i], v=st.value;
+  const dur=st.startedAt&&st.endedAt?fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000):'—';
+  let rows='<div class="sumrow"><span>Duration</span><span>'+dur+'</span></div>';
+  if(v && v.premise){
+    rows+='<div class="sumrow"><span>SDLP-premise</span><span>'+v.premise.sdlp+'</span></div>'
+      +'<div class="sumrow"><span>premise duration / segments</span><span>'+v.premise.durationS+' s / '+v.premise.segments+'</span></div>'
+      +'<div class="sumrow"><span>SDLP-deployment (60 s windows)</span><span>'+v.deployment.mean+'</span></div>'
+      +'<div class="sumrow"><span>corrections · rate · CV</span><span>'+v.intercorrection.n+' · '+v.intercorrection.ratePerS+'/s · '+(v.intercorrection.cv!=null?v.intercorrection.cv:'—')+'</span></div>'
+      +'<div class="sumrow"><span>perturbations (quiet / recent)</span><span>'+v.perturbations.quietHistoryN+' / '+v.perturbations.recentHistoryN+'</span></div>'
+      +'<div class="sumrow"><span>proxy band var — error / tracked / control / injected</span><span>'+v.proxy.errorSignalVar+' · '+v.proxy.trackedVariableVar+' · '+v.proxy.controlOutputVar+' · '+(v.proxy.injectedDisturbanceVar||'—')+'</span></div>'
+      +'<div class="sumrow"><span>fit-window variance share (S2.1b)</span><span>'+(v.fitWindow?v.fitWindow.shareOfBlockVariance:'—')+'</span></div>';
+    if(v.nback) rows+='<div class="sumrow"><span>2-back hits / targets · d′</span><span>'+v.nback.hits+'/'+v.nback.targets+' · '+(v.nback.dPrime!=null?v.nback.dPrime:'—')+'</span></div>';
+  }
+  if(v && v.medianRT!==undefined) rows+='<div class="sumrow"><span>Median RT · lapses · false starts</span><span>'+(v.medianRT!=null?v.medianRT+' ms':'—')+' · '+v.lapses+' · '+v.falseStarts+'</span></div>';
+  if(v && v.kss!=null) rows+='<div class="sumrow"><span>KSS</span><span>'+v.kss+' — '+esc(KSS_LABELS[v.kss-1])+'</span></div>';
+  openModal('<h3>'+esc(s.title)+'</h3>'+rows+'<div class="btnrow" style="margin-top:14px"><button class="ghost" id="m-close">Close</button></div>');
+  document.getElementById('m-close').onclick=closeModal;
+}
+
+function renderNow(){
+  const host=document.getElementById('nowcard');
+  if(S.current>=STEPS.length){ host.innerHTML=''; return; }
+  const step=STEPS[S.current], st=S.steps[S.current];
+  let control='';
+  if(step.k==='setup') control=setupPanel();
+  else if(step.k==='consent') control=consentPanel();
+  else if(step.k==='practice') control=practicePanel(step, st);
+  else if(step.k==='track') control=trackPanel(step, st);
+  else if(step.k==='kss') control=(st.value && step.offerBreak && !st.acknowledged) ? kssBreakPanel(step, st) : kssPanel(step);
+  else if(step.k==='pvt') control=(st.value && step.offerBreakAfter && !st.acknowledged) ? pvtBreakPanel(step, st) : pvtPanel();
+  else if(step.k==='break') control=breakPanel(step, st);
+  else if(step.k==='finish') control=finishPanel();
+  const showSkip = testMode && step.k!=='finish';
+  const desc = step.k==='track' ? CONDITIONS[step.cond].desc : (step.k==='practice'?'Familiarisation and an audibility check. Not a G1 test.':'');
+  host.innerHTML=`<div class="now">
+    <span class="tag ${step.tag}">${TAGLABEL[step.tag]||'—'}</span>
+    <h2>${esc(step.title)}</h2>
+    ${desc?`<div class="sub">${esc(desc)}</div>`:'<div class="sub" style="height:4px"></div>'}
+    ${control}
+    ${showSkip?`<div class="btnrow" style="margin-top:10px"><button class="ghost" id="test-skip">⏭ Skip step (testing mode)</button></div>`:''}
+  </div>`;
+  skipFn=null;
+  wirePanel(step, st, S.current);
+  if(showSkip){ const b=document.getElementById('test-skip'); if(b) b.onclick=()=>{ if(skipFn) skipFn(); }; }
+}
+
+/* ── panels ─────────────────────────────────────────────────────── */
+function setupPanel(){
+  const g=studyGate();
+  const rows=g.checks.map(c=>`<div class="gate"><span class="st ${c.ok?'ok':'no'}">${c.ok?'OK':'NO'}</span>
+    <div class="gb"><b>${esc(c.name)}</b><span>${esc(c.detail)}</span></div></div>`).join('');
+  return `<div class="blurb" style="margin-top:0">Ethics approval precedes any recruitment contact and cannot be granted retroactively. Pre-registration is filed with a public timestamp before collection. Nothing below is optional for a study session. No name is collected at any point — the participant number is the code.</div>
+  <div class="f2"><div class="field"><label>ETHICS / SRC APPROVAL REF</label><input id="su-eref" value="${esc(S.setup.ethicsRef)}" placeholder="e.g. SRC-2026-014"></div>
+  <div class="field"><label>APPROVAL DATE</label><input id="su-edate" type="date" value="${esc(S.setup.ethicsDate)}"></div></div>
+  <div class="f2"><div class="field"><label>PRE-REGISTRATION REF / DOI</label><input id="su-pref" value="${esc(S.setup.preregRef)}" placeholder="OSF / DOI"></div>
+  <div class="field"><label>FILED ON</label><input id="su-pdate" type="date" value="${esc(S.setup.preregDate)}"></div></div>
+  <div class="f2"><div class="field"><label>PARTICIPANT NUMBER</label><input id="su-pno" inputmode="numeric" value="${esc(S.setup.participantNo)}" placeholder="1–55"></div>
+  <div class="field"><label>OPERATOR</label><input id="su-op" value="${esc(S.setup.operator)}" placeholder="initials"></div></div>
+  <div class="f2"><div class="field"><label>§8.6 POWER RE-DERIVATION REF</label><input id="su-gpref" value="${esc(S.setup.gapPowerRef)}" placeholder="logbook / OSF entry"></div>
+  <div class="field"><label>RE-DERIVED ON</label><input id="su-gpdate" type="date" value="${esc(S.setup.gapPowerDate)}"></div></div>
+  <div style="margin:14px 0 10px">${rows}</div>
+  <div class="btnrow"><button id="su-dist" class="small">⬆ Load disturbance trace</button><button id="su-params" class="small">⚙ Parameters</button></div>
+  <div class="btnrow" style="margin-top:10px">
+    <button class="primary" id="su-start" ${g.ok?'':'disabled'}>Begin study session</button>
+  </div>
+  <div class="btnrow" style="margin-top:8px"><button class="ghost" id="su-pilot">Begin as pilot / calibration instead</button></div>
+  <div class="note">Counterbalance order is assigned from the participant number, not chosen: order ${(S.setup.participantNo?((parseInt(S.setup.participantNo,10)-1)%6+1):'—')} of 6. The early phase is counterbalanced; the fatigue conditions are positionally fixed; the removal probe follows the load block wherever it falls.</div>`;
+}
+function studyGate(){
+  const n=parseInt(S.setup.participantNo,10);
+  const td=today();
+  const eDate=S.setup.ethicsDate, pDate=S.setup.preregDate;
+  const ethicsOK = !!(S.setup.ethicsRef && eDate && eDate<=td);
+  const preregOK = !!(S.setup.preregRef && pDate && pDate<=td);
+  const numOK = n>=1 && n<=PROTOCOL.participantMax;
+  /* Standing Rule 3: a threshold chosen after seeing the number is not a
+     threshold. Fixing a parameter on the day of a study session, or after
+     the pre-registration was filed, defeats the date. */
+  const lateParams = pDate ? Object.keys(PARAMS).filter(k=>PARAMS[k].fixedOn && PARAMS[k].fixedOn>pDate) : [];
+  const arith=sessionArithmetic(buildSteps(0));
+  const dens=densityCheck();
+  const checks=[
+    {name:'Ethics approval recorded and not retroactive',
+     ok:ethicsOK,
+     detail: !S.setup.ethicsRef||!eDate ? 'Reference and date required (Appendix C)'
+       : (eDate>td ? 'Approval date '+eDate+' is in the future — approval cannot be granted retroactively'
+                   : 'Approved '+eDate+', before this session and before any recruitment contact')},
+    {name:'Pre-registration filed before collection',
+     ok:preregOK,
+     detail: !S.setup.preregRef||!pDate ? 'Reference and timestamp required (Appendix D)'
+       : (pDate>td ? 'Filing date '+pDate+' is in the future — Standing Rule 24 requires a public timestamp before collection'
+                   : 'Filed '+pDate+', before collection and before any empirical analysis')},
+    {name:'Participant number within the recruitment frame', ok:numOK,
+     detail: numOK ? ('Order '+(((n-1)%6)+1)+' of 6 assigned; code '+participantCode(n))
+       : ('A number from 1 to '+PROTOCOL.participantMax+' is required — it assigns the counterbalance order and is the participant code')},
+    {name:'Parameters fixed and dated before pre-registration', ok:paramsLocked() && lateParams.length===0,
+     detail: !paramsLocked() ? 'Some parameters have no fixed-on date (Standing Rules 1 and 3)'
+       : (lateParams.length ? ('Fixed after the pre-registration was filed: '+lateParams.join(', '))
+                            : 'All '+PARAM_SPEC.length+' carry a logbook date on or before '+pDate)},
+    {name:'Disturbance trace installed', ok:!!(DIST && !DIST.meta.surrogate && DIST.meta.inS12Range!==false),
+     detail:DIST?(DIST.meta.surrogate?'A surrogate is installed — not permitted in a study session'
+       :(DIST.meta.name+' · τ='+DIST.meta.correlationTimeS+' s'+(DIST.meta.inS12Range?' (within the S1.2 range)':' — OUTSIDE the S1.2 measured range'))):'Study 1 lateral-acceleration trace required (§1.2)'},
+    {name:'Session arithmetic closes', ok:arith.closes,
+     detail:arith.nominalS+' s nominal against '+arith.requiredS+' s required (Standing Rules 12 and 20)'},
+    /* §8.6 sized the 3-minute history-gap window on "≈9 pairs per window".
+       The realised schedule delivers about 7.5. That is a 17% shortfall on
+       the count the window length and the power derivation both rest on, so
+       it blocks a study session until a re-derivation exists and is
+       referenced. A note in an export is not a re-derivation. */
+    {name:'History-gap power re-derived at the realised pair count',
+     ok: !!(S.setup.gapPowerRef && S.setup.gapPowerDate && S.setup.gapPowerDate<=td
+            && (!pDate || S.setup.gapPowerDate<=pDate)),
+     detail: !S.setup.gapPowerRef||!S.setup.gapPowerDate
+       ? ('§8.6 assumed '+PROTOCOL.gapPairsAssumed+' pairs per 3-min window; this schedule delivers '+
+          dens.inductionPairsPerGapWindow+'. A logbook reference for the re-derivation at the realised count is required before collection (Standing Rule 19)')
+       : (S.setup.gapPowerDate>td ? 'Re-derivation date '+S.setup.gapPowerDate+' is in the future'
+          : (pDate && S.setup.gapPowerDate>pDate
+             ? 'Re-derived '+S.setup.gapPowerDate+', after the pre-registration was filed on '+pDate
+             : 'Re-derived at '+dens.inductionPairsPerGapWindow+' pairs per window — '+S.setup.gapPowerRef+', '+S.setup.gapPowerDate))},
+    {name:'Induction runs the block schedule at constant density', ok:dens.withinFivePercent!==false,
+     detail:'Inter-group cycle '+dens.blockMeanGroupCycleS+' s block vs '+dens.inductionMeanGroupCycleS+
+       ' s induction ('+(dens.cycleRelativeDifference*100).toFixed(1)+'% apart); pair proportion '+
+       dens.blockPairProportion+' vs '+dens.inductionPairProportion+'; '+dens.inductionPairsPerGapWindow+
+       ' pairs per 3-min gap window against §8.6\u2019s assumed 9'},
+    {name:'No identifiable data collected', ok:true,
+     detail:'No name or free-text participant field exists in this build. Code is '+(S.code||'derived from the participant number')+' (Appendix C)'},
+    {name:'Testing mode off', ok:!testMode, detail:testMode?'Skip is enabled — no session can be data of record':'Skip disabled'}
+  ];
+  return {checks, ok:checks.every(c=>c.ok)};
+}
+function consentPanel(){
+  return `<div class="blurb" style="margin-top:0">Confirm each item with the participant. Written informed consent is taken on the consent form; this records that it was taken, not a substitute for it.</div>
+  <div class="checklist">
+    <label><input type="checkbox" id="c1"><span>Is 18 or older</span></label>
+    <label><input type="checkbox" id="c2"><span>Has read the information sheet and signed the consent form</span></label>
+    <label><input type="checkbox" id="c3"><span>Understands they may stop at any point, without giving a reason, with no consequence</span></label>
+    <label><input type="checkbox" id="c4"><span>Understands nothing is recorded but task responses — no video, no audio, no biometric identifiers, and no name</span></label>
+    <label><input type="checkbox" id="c5"><span>Understands the record is stored under a participant number and uploaded to the study's own storage, and that de-identified data are published with a DOI after judging closes</span></label>
+    <label><input type="checkbox" id="c6"><span>Understands the session runs about 60 minutes, seated, with breaks offered at phase boundaries</span></label>
+  </div>
+  <div class="field" style="margin-top:6px"><label>CONSENT FORM VERSION</label><input id="cv" placeholder="e.g. IC v1.2 (2026-08-30)"></div>
+  <div class="btnrow"><button class="primary" id="b-continue" disabled>Consent recorded — continue</button></div>
+  <div class="btnrow" style="margin-top:8px"><button class="warn" id="b-withdraw">Participant declines</button></div>`;
+}
+function practicePanel(step, st){
+  if(st.value) return practiceReviewMarkup(st.value);
+  if(!st.started){
+    return `<div class="blurb" style="margin-top:0">Three minutes: one minute of the plain task, one with the road disturbance, one with the auditory 2-back. Familiarisation, and a check that the participant can hear the letters. Nothing is tuned here and no gate is scored here — G1 runs on full blocks across the pilot.</div>
+    <div class="btnrow" style="margin-bottom:10px"><button class="small" id="au-test">🔊 Test the sound</button></div>
+    <div class="note" style="margin-bottom:14px">Headphones or a quiet room. The participant must be able to hear the letters clearly before the load minute starts.</div>
+    <div class="btnrow"><button class="primary" id="pr-start" disabled>Start practice</button></div>`;
+  }
+  return trackMarkup(true, true);
+}
+/* Practice is familiarisation and an audibility check. It is NOT a G1 test
+   and does not render a G1 verdict. G1 requires a realised SDLP-premise
+   duration of at least 150 s per block; a 60 s practice segment yields
+   roughly 30–35 s once fit windows are excluded, so a 15%-of-the-smaller-
+   effect tolerance applied to it would be a verdict on noise. The numbers
+   are shown; the judgement is not made here. */
+function practiceReviewMarkup(v){
+  const seg=v.segments||[];
+  const base=seg.find(s=>s.cond==='base'), road=seg.find(s=>s.cond==='road'), load=seg.find(s=>s.cond==='load');
+  const inc=(x)=> (x&&base&&base.premise.sdlp) ? +(((x.premise.sdlp-base.premise.sdlp)/base.premise.sdlp)*100).toFixed(1) : null;
+  const rows=seg.map(s=>`<div class="sumrow"><span>${esc(CONDITIONS[s.cond].title)}</span><span>SDLP-premise ${s.premise.sdlp} · ${s.premise.durationS} s premise-free</span></div>`).join('');
+  const ri=inc(road), li=inc(load);
+  const minDur=Math.min.apply(null, seg.map(s=>s.premise.durationS));
+  const heard = v.nback && v.nback.stimuli>0;
+  return `${rows}
+  <div class="sumrow"><span>Change from baseline — road / load</span><span>${ri!=null?ri+'%':'—'} / ${li!=null?li+'%':'—'}</span></div>
+  ${v.nback?`<div class="sumrow"><span>2-back stimuli heard · hits</span><span>${v.nback.stimuli} · ${v.nback.hits}/${v.nback.targets}</span></div>`:''}
+  ${v.practiceConfirmation ? v.practiceConfirmation.checks.map(c=>`<div class="gate"><span class="st ${c.within?'ok':'no'}">${c.within?'OK':'!'}</span><div class="gb"><b>${esc(CONDITIONS[c.cond].title)} confirmed against the pilot target</b>
+  <span>${c.increasePct!=null?c.increasePct+'% against a target of '+v.practiceConfirmation.targetIncreasePct+'% (band ±'+v.practiceConfirmation.bandPct+'%). ':'No comparable increase. '}${c.within?'Within band.':'Outside band — logged as a deviation. Nothing is tuned; the session continues as specified.'}</span></div></div>`).join('') : ''}
+  <div class="gate" style="margin-top:10px"><span class="st na">i</span><div class="gb"><b>Not a G1 test</b>
+  <span>G1 is scored across about six pilot participants on full 300 s blocks with a realised SDLP-premise duration of at least 150 s. The shortest segment here gives ${minDur} s. These figures are familiarisation only and carry no pairwise tolerance; they are recorded, not judged. Parameters are never changed inside a session.</span></div></div>
+  <div class="gate"><span class="st ${heard?'ok':'no'}">${heard?'OK':'NO'}</span><div class="gb"><b>Auditory channel confirmed</b>
+  <span>${heard?(v.nback.stimuli+' letters delivered by '+v.nback.modality+'. The participant could hear the load minute.'):'No 2-back stimuli were delivered — check the sound before continuing.'}</span></div></div>
+  <div class="btnrow" style="margin-top:14px"><button class="primary" id="pr-ok">Recorded — continue</button></div>`;
+}
+function trackPanel(step, st){ return trackMarkup(CONDITIONS[step.cond] && CONDITIONS[step.cond].load, false); }
+/* §1.2: "tracking parameters unchanged". That includes the motor task. v3
+   put MATCH inside the same row as ◀ and ▶, which shrank both from about
+   half the row to under a third and moved ▶ — a change to the tracking
+   task present only in the condition that has to be matched on SDLP.
+   The correction row is now identical in every condition and MATCH sits
+   on its own row. The running score is gone from data blocks: accuracy
+   belongs in the file, not on the screen. isPractice is passed rather than
+   read off the engine, because this markup is rendered before engStart. */
+function trackMarkup(withLoad, isPractice){
+  const showScore = !!isPractice;
+  return `<div class="trackwrap" id="trackwrap"><canvas id="track-canvas" height="90"></canvas></div>
+    <div class="zonebar"><span id="zone-stat">tracking</span><span id="bump-stat"></span></div>
+    ${withLoad?`<div class="nbrow" id="nbrow"><span class="nb-cue" id="nb-cue">listening…</span>${showScore?`<span class="nb-score" id="nb-score">0/0</span>`:''}</div>`:''}
+    <div class="holdrow">
+      <button class="hold" id="imp-left">◀</button>
+      <button class="hold" id="imp-right">▶</button>
+    </div>
+    ${withLoad?`<div class="holdrow"><button class="hold nbk" id="nb-match">MATCH</button></div>`:''}
+    <div class="timerbig" id="t-display">--:--</div>
+    <div class="timertarget">runs to the second — no pause, no skip</div>`;
+}
+function kssPanel(step){
+  return `<div class="blurb" style="margin-top:0">How sleepy do you feel <b>right now</b>?</div>
+    <div class="kssdisplay"><span class="kssnum" id="kss-num">–</span></div>
+    <div class="kssdesc" id="kss-desc">Move the slider</div>
+    <input type="range" class="kssrange" id="kss-slider" min="1" max="9" step="1" value="5">
+    <div class="scalehint"><span>1 · extremely alert</span><span>9 · fighting sleep</span></div>
+    <div class="btnrow"><button class="primary" id="b-kss-confirm" disabled>Confirm</button></div>
+    ${step.offerBreak?`<div class="note">A break is offered after this rating, not beside it.</div>`:''}`;
+}
+/* §8.2b "Breaks are offered at phase boundaries." Offered AFTER the rating,
+   never before it, for the same reason the PVT break is: the induction-end
+   KSS is the input to G2's "KSS rises ≥2 points", and a participant who has
+   just rested is not rating the induction. v4 put the offer beside the
+   slider with no enforced order. Timed, because this break sits between the
+   fatigue induction and the phase where its effect is measured, so its
+   length is a covariate on the study's central comparison. */
+function kssBreakPanel(step, st){
+  const v=st.value||{};
+  return `<div class="blurb" style="margin-top:0">Rating recorded — KSS ${v.kss!=null?v.kss:'—'}${v.label?', '+esc(v.label):''}.</div>
+    <div class="blurb">A break is offered here, at the ${esc(step.boundary)} boundary. Taken or declined, it is recorded either way; if it is taken it is timed.</div>
+    <div class="btnrow"><button class="primary" id="kb-skip">No break — continue</button></div>
+    <div class="btnrow" style="margin-top:8px"><button class="small" id="kb-take">Break taken — start timing</button></div>
+    <div class="note" id="kb-note">Offered after the rating, not before: this rating is what G2 reads.</div>`;
+}
+function pvtPanel(){
+  return `<div class="blurb" style="margin-top:0">Tap the moment the panel turns green. Nothing else.</div>
+    <div class="pvtstats">
+      <div>Trials<b id="pvt-n">0</b></div><div>Median RT<b id="pvt-med">—</b></div>
+      <div>Lapses<b id="pvt-lap">0</b></div><div>False starts<b id="pvt-fs">0</b></div>
+    </div>
+    <div class="flash" id="pvt-flash">Get ready…</div>
+    <div class="timerbig" id="t-display" style="font-size:28px">--:--</div>`;
+}
+/* §8.2b "Breaks are offered at phase boundaries and completion rate is
+   reported." Offered AFTER the phase-end PVT, never before it — a rest
+   taken before a vigilance test would change the reading G2 depends on. */
+function pvtBreakPanel(step, st){
+  const v=st.value||{};
+  return `<div class="blurb" style="margin-top:0">PVT complete — median ${v.medianRT!=null?v.medianRT+' ms':'—'}, ${v.lapses} lapse(s).</div>
+    <div class="blurb">A break is offered here, at the ${esc(step.offerBreakAfter)} boundary. Whether it is taken or declined is recorded either way.</div>
+    <div class="btnrow"><button class="primary" id="pb-skip">No break — continue</button></div>
+    <div class="btnrow" style="margin-top:8px"><button class="small" id="pb-take">Break taken — start timing</button></div>
+    <div class="note" id="pb-note">Offered after the PVT, not before: a rest before a vigilance test would change the reading.</div>`;
+}
+function breakPanel(step, st){
+  return `<div class="blurb" style="margin-top:0">Seated, eyes open, no task. Two minutes, timed against the wall clock — the persistence probe is only interpretable against a known break length.</div>
+    <div class="timerbig" id="t-display">${fmtClock(st.remaining!=null?st.remaining:step.dur)}</div>
+    <div class="timertarget">runs automatically · realised length is recorded</div>`;
+}
+function finishPanel(){
+  const rows=STEPS.map((s,k)=>{
+    const st=S.steps[k];
+    const dur=st.startedAt&&st.endedAt?fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000):'—';
+    return `<div class="sumrow"><span>${esc(s.title)}</span><span>${dur}</span></div>`;
+  }).join('');
+  const ok=sessionCompletedSuccessfully();
+  const mc=manipulationCheck();
+  const banner=`<div class="blurb" style="margin-top:0;padding:12px 14px;border-radius:12px;font-weight:600;background:${ok?'var(--c-block-tint)':'var(--warn-tint)'};color:${ok?'var(--accent)':'var(--warn)'}">`
+    +(ok?'✓ Session completed':'⚠ Session ended incomplete'+(S.withdrawn?' — withdrawn at '+(S.withdrawnAtPhase||'unknown phase'):''))+`</div>`;
+  const g2=`<div class="gate"><span class="st ${mc.result==='induction confirmed'?'ok':(mc.result==='incomplete'?'na':'no')}">G2</span>
+    <div class="gb"><b>Manipulation check</b><span>KSS rise ${mc.kssRise!=null?mc.kssRise:'—'} · PVT median Δ ${mc.pvtMedianRtDeltaMs!=null?mc.pvtMedianRtDeltaMs+' ms':'—'} · lapses Δ ${mc.pvtLapseDelta!=null?mc.pvtLapseDelta:'—'} — ${esc(mc.result)}</span></div></div>`;
+  const who=S.code?`<div class="blurb" style="margin-top:0">${esc(S.code)} · order ${S.orderIndex+1} of 6</div>`:'';
+  return banner+who+g2+rows+`<div class="blurb" style="margin-top:14px">Saving automatically — no action needed.</div>`;
+}
+
+/* ── wiring ─────────────────────────────────────────────────────── */
+function wirePanel(step, st, i){
+  if(step.k==='setup'){
+    const bind=(id,key)=>{ const el=document.getElementById(id); if(el) el.oninput=()=>{ S.setup[key]=el.value.trim(); 
+      if(key==='participantNo'){ const n=parseInt(el.value,10);
+        if(n>=1 && n<=PROTOCOL.participantMax){ S.orderIndex=(n-1)%6; S.code=participantCode(n); STEPS=buildSteps(S.orderIndex); }
+        else { S.code=''; } }
+      save(); renderNow(); }; };
+    bind('su-eref','ethicsRef'); bind('su-edate','ethicsDate'); bind('su-pref','preregRef');
+    bind('su-pdate','preregDate'); bind('su-pno','participantNo'); bind('su-op','operator');
+    bind('su-gpref','gapPowerRef'); bind('su-gpdate','gapPowerDate');
+    document.getElementById('su-dist').onclick=()=>document.getElementById('dist-file').click();
+    document.getElementById('su-params').onclick=()=>{ uiView='params'; renderApp(); };
+    document.getElementById('su-pilot').onclick=()=>{ S.mode='pilot'; log('Pilot / calibration session started — not data of record'); beginSession(i); };
+    const b=document.getElementById('su-start');
+    if(b) b.onclick=()=>{ if(!studyGate().ok) return; S.mode='study'; log('Study session started — ethics '+S.setup.ethicsRef+', prereg '+S.setup.preregRef); beginSession(i); };
+    skipFn=()=>{ S.mode='test'; beginSession(i); };
+  }
+  if(step.k==='consent'){
+    const boxes=['c1','c2','c3','c4','c5','c6'].map(id=>document.getElementById(id));
+    const cont=document.getElementById('b-continue'), cv=document.getElementById('cv');
+    const upd=()=>{ cont.disabled=!(boxes.every(x=>x.checked) && cv.value.trim()); };
+    boxes.forEach(b=>b.onchange=upd); cv.oninput=upd;
+    cont.onclick=()=>{ S.steps[i].value={consentFormVersion:cv.value.trim(), recordedAt:nowISO()};
+      log('Consent recorded — form '+cv.value.trim()); completeStep(i); };
+    document.getElementById('b-withdraw').onclick=()=>confirmWithdraw('consent');
+    skipFn=()=>{ log('Consent skipped (test mode)'); completeStep(i); };
+  }
+  if(step.k==='practice'){
+    if(st.value){ document.getElementById('pr-ok').onclick=()=>{
+        log('Practice confirmation recorded'); completeStep(i); }; skipFn=()=>completeStep(i); return; }
+    if(!st.started){
+      const au=document.getElementById('au-test'), go=document.getElementById('pr-start');
+      au.onclick=()=>{ ensureAudio(); sayLetter('K'); setTimeout(()=>sayLetter('R'),900); go.disabled=false;
+        S.steps[i].audioChecked=true; save(); };
+      go.onclick=()=>{ st.started=true; st.startedAt=nowISO(); save(); renderNow();
+        engStart(i, step, ()=>{ save(); renderNow(); }); };
+      skipFn=()=>{ log('Practice skipped (test mode)'); completeStep(i); };
+      return;
+    }
+    wireTrackControls(CONDITIONS.load.load);
+    skipFn=()=>{ engStop(); log('Practice cut short (test mode)'); completeStep(i); };
+  }
+  if(step.k==='track'){
+    if(!st.startedAt){ st.startedAt=nowISO(); st.status='current'; log(step.title+' started'); save(); }
+    else if(!st.value && !Eng.active){
+      /* The page was reloaded or the app was reopened part-way through this
+         block. v3 restarted it silently and the interrupted run vanished.
+         The restart is a deviation and is logged where it happens. */
+      st.restarts=(st.restarts||0)+1;
+      st.startedAt=nowISO();
+      deviation('interruption','"'+step.title+'" restarted from the beginning (attempt '+(st.restarts+1)+
+        ') after an interruption — the partial run was not retained and is not in the record');
+    }
+    wireTrackControls(CONDITIONS[step.cond].load);
+    if(!Eng.active) engStart(i, step, null);
+    skipFn=()=>{ engStop(); deviation('operator','Block '+step.title+' ended early in testing mode'); completeStep(i); };
+  }
+  if(step.k==='kss'){
+    /* The break, if this boundary offers one, is a second panel shown after
+       the rating is in — never a control sitting next to the slider. */
+    const finBreak=(taken, startedAt)=>{
+      S.breaks.push({boundary:step.boundary, offeredAt:nowISO(), taken:!!taken,
+        durationS: startedAt ? +((Date.now()-startedAt)/1000).toFixed(1) : null, timed:!!startedAt,
+        afterRating:true});
+      st.acknowledged=true;
+      log('Break at '+step.boundary+' — '+(taken?('taken, '+((Date.now()-startedAt)/1000).toFixed(1)+' s'):'declined'));
+      completeStep(i);
+    };
+    if(st.value && step.offerBreak && !st.acknowledged){
+      const sk=document.getElementById('kb-skip'), tk=document.getElementById('kb-take');
+      if(sk) sk.onclick=()=>finBreak(false, null);
+      if(tk) tk.onclick=()=>{
+        const t0=Date.now(); tk.disabled=true;
+        const note=document.getElementById('kb-note');
+        const iv=setInterval(()=>{ if(note) note.textContent='Break running — '+fmtClock((Date.now()-t0)/1000)+'. Press continue when the participant is ready.'; },1000);
+        if(sk){ sk.textContent='Break over — continue'; sk.onclick=()=>{ clearInterval(iv); finBreak(true, t0); }; }
+      };
+      skipFn=()=>finBreak(false, null);
+      return;
+    }
+    const sl=document.getElementById('kss-slider'), num=document.getElementById('kss-num'),
+      desc=document.getElementById('kss-desc'), ok=document.getElementById('b-kss-confirm');
+    let touched=false;
+    const record=(v, skipped)=>{
+      S.steps[i].value={kss:v, label:KSS_LABELS[v-1], boundary:step.boundary, at:nowISO(),
+        touched:!!touched && !skipped, skipped:!!skipped};
+      log('KSS '+v+' at '+step.boundary+(skipped?' (skipped, test mode)':''));
+      /* Hold the step open so the break panel can render. completeStep would
+         advance past the offer. */
+      if(step.offerBreak && !st.acknowledged){ save(); renderApp(); return; }
+      completeStep(i);
+    };
+    sl.oninput=()=>{ touched=true; const v=+sl.value; num.textContent=v; desc.textContent=KSS_LABELS[v-1]; ok.disabled=false; };
+    ok.onclick=()=>record(+sl.value, false);
+    skipFn=()=>record(+sl.value, true);
+  }
+  if(step.k==='pvt'){
+    if(st.value && step.offerBreakAfter && !st.acknowledged){
+      const fin=(taken, startedAt)=>{
+        S.breaks.push({boundary:step.offerBreakAfter, offeredAt:nowISO(), taken:!!taken,
+          durationS: startedAt? +((Date.now()-startedAt)/1000).toFixed(1) : null, timed:!!startedAt});
+        st.acknowledged=true; log('Break at '+step.offerBreakAfter+' — '+(taken?'taken':'declined')); completeStep(i);
+      };
+      const sk=document.getElementById('pb-skip'), tk=document.getElementById('pb-take');
+      if(sk) sk.onclick=()=>fin(false, null);
+      if(tk) tk.onclick=()=>{
+        const t0=Date.now(); tk.disabled=true;
+        const note=document.getElementById('pb-note');
+        const iv=setInterval(()=>{ if(note) note.textContent='Break running — '+fmtClock((Date.now()-t0)/1000)+'. Press continue when the participant is ready.'; },1000);
+        if(sk){ sk.textContent='Break over — continue'; sk.onclick=()=>{ clearInterval(iv); fin(true, t0); }; }
+      };
+      skipFn=()=>fin(false, null);
+    } else wirePVT(i, st, step);
+  }
+  if(step.k==='break'){
+    if(!st.startedAt){ st.startedAt=nowISO(); st.remaining=step.dur; log('Break started'); save(); }
+    skipFn=()=>{ log('Break cut short (test mode)'); completeStep(i); };
+  }
+  if(step.k==='finish') finalizeSessionOnce(i);
+}
+function wireTrackControls(withLoad){
+  const L=document.getElementById('imp-left'), R=document.getElementById('imp-right');
+  if(L) ['pointerdown'].forEach(ev=>L.addEventListener(ev, e=>{ e.preventDefault(); engInput(-1, e.pointerType||'touch'); }, {passive:false}));
+  if(R) ['pointerdown'].forEach(ev=>R.addEventListener(ev, e=>{ e.preventDefault(); engInput(1, e.pointerType||'touch'); }, {passive:false}));
+  if(withLoad){
+    const M=document.getElementById('nb-match');
+    if(M) M.addEventListener('pointerdown', e=>{ e.preventDefault(); nbackRespond();
+      M.classList.add('fired'); setTimeout(()=>M.classList.remove('fired'),70); }, {passive:false});
+  }
+}
+/* Keyboard, for desktop runs. Auto-repeat is ignored: one keypress is one
+   corrective event, so the input stream stays unambiguous. */
+document.addEventListener('keydown', e=>{
+  if(!Eng.active || e.repeat) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); engInput(-1,'key'); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); engInput(1,'key'); }
+  else if(e.code==='Space' && Eng.nback){ e.preventDefault(); nbackRespond(); }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && Eng.active) deviation('attention','Page hidden during '+(Eng.step?Eng.step.title:'a block'));
+});
+
+function beginSession(i){
+  S.startedAt=S.startedAt||nowISO();
+  S.seed=S.seed||((Date.now()^hashStr(String(Math.random())))>>>0);
+  S.env=captureEnv();
+  const n=parseInt(S.setup.participantNo,10);
+  if(n>=1) S.orderIndex=(n-1)%6;
+  STEPS=buildSteps(S.orderIndex);
+  const a=sessionArithmetic(STEPS);
+  log('Session arithmetic '+(a.closes?'closes':'DOES NOT CLOSE')+' — '+a.nominalS+' s of a required '+a.requiredS+' s');
+  if(!a.closes) deviation('arithmetic','Nominal session length '+a.nominalS+' s ≠ 3600 s');
+  log('Early-phase order '+(S.orderIndex+1)+' of 6 — '+ORDERS[S.orderIndex%6].join(', '));
+  /* The load block and the removal probe share one rating, because §1.2
+     fixes the probe "immediately after the load block" and a rating is both
+     a delay and a cognitive task. That is the right call and it has a
+     price: §8.3 predicts KSS/PVT "recovers" for the row "Load, 60 s after
+     removal", and one number spanning both boundaries cannot show a change
+     between them. v4 left this reasoning in a source comment. It is a
+     departure from "KSS at every block boundary" and it retires a
+     pre-specified prediction, so it is registered in both places the
+     protocol provides. */
+  registerCombinedRatingDeviation();
+  save(); startTicker(); completeStep(i);
+}
+/* Standing Rule 1 (log it where it happens) and Standing Rule 7 (an
+   analysis that cannot be run is recorded as abandoned, with its reason,
+   not dropped). Idempotent — a resumed session does not log it twice. */
+function registerCombinedRatingDeviation(){
+  if(S.log.some(e=>e.combinedRating)) return;
+  const d={at:nowISO(), step:S.current, kind:'design',
+    detail:'Single KSS rating spans the load-block and removal-probe boundaries. §1.2 fixes the probe immediately after the load block and nothing may come between them, so the two boundary ratings are taken together after the probe and the record carries both labels. This departs from §1.2 "KSS at every block boundary" and must be carried in the pre-registration before it is run.'};
+  S.deviations.push(d);
+  S.log.push({at:d.at, msg:'DEVIATION — '+d.kind+': '+d.detail, dev:true, combinedRating:true});
+  S.abandoned.push({at:nowISO(), text:
+    'S2.16 / §8.3, row "Load, 60 s after removal — KSS/PVT recovers": the KSS half is not testable in this design. A single rating spanning the load block and the removal probe cannot show recovery between them, and a retrospective rating is not a KSS, which asks how the person feels right now. The PVT half is unaffected and is unchanged. Recorded under Standing Rule 7 as an analysis this design cannot run, with its reason, rather than omitted from the write-up.'});
+  save();
+}
+function captureEnv(){
+  const scr=window.screen||{};
+  return {userAgentPlatform:(navigator.platform||''), languages:(navigator.languages||[]).slice(0,2),
+    screen:{w:scr.width||null, h:scr.height||null, dpr:window.devicePixelRatio||1},
+    displayHz:measuredHz, nominalSampleHz:PROTOCOL.fs,
+    speechSynthesis:speechAvailable(), vibrationAvailable:(typeof navigator.vibrate==='function'),
+    touchPoints:navigator.maxTouchPoints||0, pointerEvents:(typeof window.PointerEvent!=='undefined'), at:nowISO()};
+}
+
+function sessionCompletedSuccessfully(){
+  if(S.withdrawn) return false;
+  return S.steps.slice(0, STEPS.length-1).every(s=>s.status==='done');
+}
+function confirmWithdraw(phase){
+  openModal('<h3>Stop the session?</h3><p>The participant may stop at any point, without giving a reason. Everything collected so far is kept and the phase is recorded.</p><div class="btnrow"><button class="warn" id="m-yes">Stop now</button><button class="ghost" id="m-no">Cancel</button></div>');
+  document.getElementById('m-no').onclick=closeModal;
+  document.getElementById('m-yes').onclick=()=>{
+    S.withdrawn=true; S.withdrawnAtPhase=phase||(STEPS[S.current]?(STEPS[S.current].phase||STEPS[S.current].k):'unknown');
+    engStop();
+    log('Withdrew at '+S.withdrawnAtPhase+' — session ending');
+    closeModal(); jumpToFinish();
+  };
+}
+function jumpToFinish(){
+  stopTicker(); engStop();
+  const f=STEPS.length-1;
+  S.current=f; S.steps[f].status='current';
+  save(); renderApp();
+}
+function completeStep(i){
+  const st=S.steps[i];
+  st.status='done'; st.endedAt=nowISO(); if(!st.startedAt) st.startedAt=st.endedAt;
+  if(i+1<S.steps.length){ S.current=i+1; S.steps[i+1].status='current'; }
+  else { S.current=S.steps.length; stopTicker(); }
+  save(); renderApp();
+}
+function finalizeSessionOnce(i){
+  if(S.finalized) return;
+  S.finalized=true;
+  S.completedSuccessfully=sessionCompletedSuccessfully();
+  const mc=manipulationCheck();
+  log('Session '+(S.completedSuccessfully?'completed':'ended incomplete')+(S.code?' — '+S.code:'')+'; G2 '+mc.result);
+  completeStep(i);
+  saveToDrive(); showDoneModal();
+}
+/* The break is timed against the wall clock, not by decrementing a counter.
+   setInterval is throttled hard in a backgrounded tab — on mobile to as
+   little as once a minute — so v3's counter could report 2:00 elapsed after
+   a far longer rest, and the panel's own claim that "the persistence probe
+   is only interpretable against a known break length" would be false. The
+   realised length is recorded and a deviation is logged if it drifts. */
+function startTicker(){
+  if(tickHandle) return;
+  tickHandle=setInterval(()=>{
+    updateElapsed();
+    const i=S.current, step=STEPS[i], st=S.steps[i];
+    if(step && step.k==='break' && st.status==='current' && st.startedAt){
+      const elapsed=(Date.now()-new Date(st.startedAt).getTime())/1000;
+      st.remaining=Math.max(0, step.dur-elapsed);
+      const d=document.getElementById('t-display'); if(d) d.textContent=fmtClock(st.remaining);
+      if(st.remaining<=0){
+        st.realisedBreakS=+elapsed.toFixed(1);
+        if(Math.abs(elapsed-step.dur)>PROTOCOL.breakToleranceS)
+          deviation('break','Break ran '+st.realisedBreakS+' s against a nominal '+step.dur+
+            ' s — the persistence probe must be read against the realised length');
+        buzz(200); log('Break complete — '+st.realisedBreakS+' s realised'); completeStep(i);
+      } else save();
+    }
+  },1000);
+}
+function stopTicker(){ if(tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
+
+/* ── PVT (Dinges & Powell 1985), 3 min ──────────────────────────── */
+function wirePVT(i, st, step){
+  if(st.status==='done') return;
+  if(st.wired) return; st.wired=true;
+  const state={running:true, trials:[], armed:false, waitingSince:0, timeoutId:null, deadline:0, endCheck:null, isi:null};
+  const flash=document.getElementById('pvt-flash'), disp=document.getElementById('t-display');
+  const t0=performance.now();
+  /* Seeded from the session seed, like every other schedule in this file, so
+     the ISI sequence is reproducible from the exported record. v3 used
+     Math.random(), which quietly broke the file's own reproducibility claim. */
+  const prnd=mulberry32((S.seed ^ hashStr('pvt:'+step.point))>>>0);
+  if(!st.startedAt){ st.startedAt=nowISO(); log(step.title+' started'); save(); }
+  function stats(){
+    const rts=state.trials.filter(t=>t.rt!=null).map(t=>t.rt).sort((a,b)=>a-b);
+    const med=rts.length?rts[Math.floor(rts.length/2)]:null;
+    const lapses=state.trials.filter(t=>t.rt!=null&&t.rt>PROTOCOL.pvtLapseMs).length;
+    const fs=state.trials.filter(t=>t.falseStart).length;
+    document.getElementById('pvt-n').textContent=state.trials.length;
+    document.getElementById('pvt-med').textContent=med!=null?med+' ms':'—';
+    document.getElementById('pvt-lap').textContent=lapses;
+    document.getElementById('pvt-fs').textContent=fs;
+    const mean=rts.length?rts.reduce((a,b)=>a+b,0)/rts.length:null;
+    return {point:step.point, medianRT:med, meanRT:mean!=null?Math.round(mean):null, lapses, lapseThresholdMs:PROTOCOL.pvtLapseMs,
+      falseStarts:fs, n:state.trials.length, durationS:step.dur,
+      isiRangeMs:[PROTOCOL.pvtIsiMinMs,PROTOCOL.pvtIsiMaxMs], timingEvent:'pointerdown', seeded:true,
+      trials:state.trials.slice()};
+  }
+  function schedule(){
+    flash.className='flash'; flash.textContent='Wait…';
+    const isi=PROTOCOL.pvtIsiMinMs + prnd()*(PROTOCOL.pvtIsiMaxMs-PROTOCOL.pvtIsiMinMs);
+    state.isi=Math.round(isi);
+    state.timeoutId=setTimeout(()=>{ flash.className='flash go'; flash.textContent='TAP';
+      state.waitingSince=performance.now(); state.armed=true; }, isi);
+  }
+  /* pointerdown, not click. click fires on release, so v3's reaction times
+     carried the press duration — tens of milliseconds, on a measure whose
+     entire signal is tens of milliseconds. */
+  const respond=(e)=>{
+    if(e && e.preventDefault) e.preventDefault();
+    if(!state.running) return;
+    if(state.armed){
+      const rt=Math.round(performance.now()-state.waitingSince);
+      state.trials.push({rt, isiMs:state.isi, tS:+((performance.now()-t0)/1000).toFixed(2)}); state.armed=false;
+      flash.className='flash'; flash.textContent=rt+' ms'; stats();
+      if(performance.now()<state.deadline) setTimeout(schedule,400);
+    } else {
+      state.trials.push({rt:null, falseStart:true, isiMs:state.isi, tS:+((performance.now()-t0)/1000).toFixed(2)});
+      flash.className='flash early'; flash.textContent='Too early'; stats();
+      clearTimeout(state.timeoutId);
+      if(performance.now()<state.deadline) setTimeout(schedule,600);
+    }
+  };
+  flash.addEventListener('pointerdown', respond, {passive:false});
+  function finish(){
+    state.running=false; clearTimeout(state.timeoutId); clearInterval(state.endCheck);
+    const s=stats(); S.steps[i].value=s;
+    log('PVT complete — median '+(s.medianRT!=null?s.medianRT+' ms':'—')+', '+s.lapses+' lapse(s)');
+    if(step.offerBreakAfter && !S.steps[i].acknowledged){ save(); renderApp(); return; }
+    completeStep(i);
+  }
+  state.deadline=performance.now()+step.dur*1000;
+  schedule();
+  state.endCheck=setInterval(()=>{
+    const remain=Math.max(0,(state.deadline-performance.now())/1000);
+    if(disp) disp.textContent=fmtClock(remain);
+    if(remain<=0){ flash.className='flash'; flash.textContent='Done'; finish(); }
+  },250);
+  skipFn=()=>{ finish(); };
+}
+
+/* ── done list / log ────────────────────────────────────────────── */
+function renderDoneList(){
+  const host=document.getElementById('donelist');
+  const rows=STEPS.map((s,i)=>({s,st:S.steps[i],i})).filter(x=>x.st.status==='done');
+  if(!rows.length){ host.innerHTML=''; return; }
+  host.innerHTML=rows.slice().reverse().map(({s,st})=>{
+    const dur=st.startedAt&&st.endedAt?fmtClock((new Date(st.endedAt)-new Date(st.startedAt))/1000):'—';
+    let extra=dur;
+    const v=st.value;
+    if(v && v.premise) extra=dur+' · premise '+v.premise.sdlp;
+    else if(v && v.medianRT!==undefined) extra=dur+' · '+(v.medianRT!=null?v.medianRT+' ms':'—');
+    else if(v && v.kss!=null) extra='KSS '+v.kss;
+    return `<div class="dlrow"><span class="ck">✓</span><span class="nm">${esc(s.title)}</span><span class="du">${esc(extra)}</span></div>`;
+  }).join('');
+}
+function renderLog(){
+  const host=document.getElementById('log');
+  if(!host) return;
+  if(!S.log.length){ host.innerHTML='<div class="empty">Nothing logged yet.</div>'; return; }
+  host.innerHTML=S.log.slice().reverse().map(e=>{
+    const d=new Date(e.at);
+    const t=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+    return `<div class="logline${e.dev?' dev':''}"><span class="t">${t}</span><span>${esc(e.msg)}</span></div>`;
+  }).join('');
+}
+
+/* ══ PROTOCOL / COMPLIANCE VIEW ═══════════════════════════════════ */
+function renderProtocolView(){
+  const host=document.getElementById('otherview');
+  const a=sessionArithmetic(STEPS.length?STEPS:buildSteps(0));
+  const sch=buildSchedule(PROTOCOL.blockS, 1, {maxGroups:PROTOCOL.groupsPerBlock});
+  /* Every row below is computed from the structure actually built. A
+     conformance screen whose rows are hardcoded true is a claim, not a
+     check — v3 had eleven of those. */
+  const steps=STEPS.length?STEPS:buildSteps(0);
+  const idx=k=>steps.findIndex(s=>s.k==='track'&&s.cond===k);
+  const loadI=idx('load'), remI=idx('removal'), persI=idx('persist');
+  const breakI=steps.findIndex(s=>s.k==='break');
+  /* The flag is asserted, not decorative. A track step starts from
+     wirePanel with no operator control between it and the previous step;
+     noPreamble records that this step must never acquire one. If a future
+     build adds a start screen for tracking blocks, this row goes red
+     instead of the guarantee quietly lapsing. */
+  const removalImmediate = loadI>=0 && remI===loadI+1 && steps[remI].noPreamble===true;
+  const persistAfterBreak = persI>=0 && breakI>=0 && persI===breakI+1 && steps[breakI].dur===PROTOCOL.breakS;
+  const pvtPoints = steps.filter(s=>s.k==='pvt').map(s=>s.point);
+  const pvtOK = pvtPoints.length===2 && pvtPoints.indexOf('early-phase-end')>=0 && pvtPoints.indexOf('session-end')>=0;
+  const trackBlocks = steps.filter(s=>s.k==='track');
+  /* A rating follows every tracking block. The load block is the one
+     exception by design: its removal probe is positionally fixed to it and
+     nothing may come between them, so the load block and the probe share a
+     single rating taken after the probe, labelled with both boundaries. */
+  const kssAfterEvery = trackBlocks.every(s=>{
+    const i=steps.indexOf(s);
+    for(let j=i+1;j<steps.length;j++){
+      if(steps[j].k==='kss') return true;
+      if(steps[j].k==='track') return steps[j].cond==='removal' && s.cond==='load';
+    }
+    return false; });
+  const leadOut = PROTOCOL.blockS-sch.lastOnsetS-PROTOCOL.postLastOnsetS;
+  const layoutOK = Math.abs(sch.leadInS-50)<0.01 && leadOut>45 && leadOut<85;
+  const indSched = buildSchedule(PROTOCOL.inductionS, 1, {});
+  const dens = densityCheck();
+  const probe = buildProbeSchedule(PROTOCOL.probeS, 1);
+  const lateParams = S.setup.preregDate ? Object.keys(PARAMS).filter(k=>PARAMS[k].fixedOn && PARAMS[k].fixedOn>S.setup.preregDate) : [];
+  /* Every break actually recorded is timed, and no rating-boundary break is
+     reachable before its rating. The first half is structural; the second is
+     checked against what the session has recorded so far. */
+  const breakAfterRatingOK = S.breaks.every(b=>b.taken ? (b.timed===true && b.durationS!=null) : true);
+  const items=[
+    ['60 Hz sampling, browser-based', PROTOCOL.fs===60,
+      'Fixed-step accumulator at '+PROTOCOL.fs+' Hz; measured display '+(measuredHz||'—')+' Hz; per-block frame jitter and wall-clock drift recorded as covariates'],
+    ['Discrete-input control modality', P('impulseAmp')>0,
+      'One tap = one impulse of '+P('impulseAmp')+' units; identical row geometry in every condition; auto-repeat ignored'],
+    ['Raw input stream logged upstream of the plant', true,
+      'Every impulse stored with its sample index and direction, before the plant'],
+    ['Session closes at 60 minutes', a.closes,
+      a.nominalS+' s nominal of a required '+a.requiredS+' s (Standing Rules 12 and 20)'],
+    ['Early phase counterbalanced; fatigue positionally fixed', ORDERS.length===6,
+      'Order '+(S.orderIndex+1)+' of 6 — '+ORDERS[S.orderIndex%6].join(', ')+'; assigned from the participant number, not chosen'],
+    ['Removal probe immediately after the load block', removalImmediate,
+      removalImmediate ? 'Step '+(remI+1)+' follows step '+(loadI+1)+' with nothing between them and carries noPreamble; it auto-starts with no operator control in between. Both boundary ratings are taken together after the probe — registered as a deviation and as an abandoned analysis (Standing Rule 7), because §8.3\u2019s KSS-recovery prediction cannot be tested on one rating'
+                       : 'Either something is scheduled between the load block and the probe, or the probe has lost its noPreamble guarantee — §1.2 requires nothing between'],
+    ['Persistence probe after a 2-min break', persistAfterBreak,
+      persistAfterBreak ? '60 s baseline-equivalent with perturbations, directly after the timed '+PROTOCOL.breakS+' s break'
+                        : 'Probe is not directly after the break'],
+    ['Block layout 50 s / ≈184 s / ≈66 s', layoutOK,
+      'Lead-in '+sch.leadInS+' s · last onset '+sch.lastOnsetS.toFixed(1)+' s · lead-out '+leadOut.toFixed(1)+' s'],
+    ['8 pairs + 2 catch singletons per block', sch.pairs===8&&sch.singletons===2&&sch.quietHistoryN===10&&sch.recentHistoryN===8,
+      sch.quietHistoryN+' quiet-history and '+sch.recentHistoryN+' recent-history observations, against a power requirement of eight per history'],
+    ['Quiet interval from previous onset, jitter 15–19 s', sch.predictedFreeS>=PROTOCOL.premiseFloorS,
+      'Predicted perturbation-free sample '+sch.predictedFreeS+' s (floor '+PROTOCOL.premiseFloorS+' s)'],
+    ['Common 3.0 s fit window', PROTOCOL.fitWindowS===3.0,
+      'Fixed as common before any data are fitted; premise excludes onset + '+PROTOCOL.fitWindowS+' s and '+PROTOCOL.premiseTailS+' s after'],
+    ['SDLP computed two ways for every condition', PROTOCOL.deployWindowS===60,
+      'Premise (perturbation-free, duration and segments reported) and deployment (rolling '+PROTOCOL.deployWindowS+' s, stride '+PROTOCOL.deployStrideS+' s); fit-window variance share reported for S2.1b'],
+    ['Disturbance is a retained file, sample by sample', !!(DIST && DIST.meta.inS12Range!==false),
+      DIST?(DIST.meta.name+' · resampled '+DIST.meta.sourceHz+'→60 Hz · τ='+DIST.meta.correlationTimeS+' s'+(DIST.meta.surrogate?' · SURROGATE, pilot only':'')):'No trace installed'],
+    ['Cognitive load is an auditory 2-back, tracking unchanged', P('nbackLevel')===2,
+      'Level '+P('nbackLevel')+', ISI '+P('nbackIsiS')+' s; plant, noise, impulse, schedule and control geometry identical to baseline; no per-response feedback in a data block'],
+    ['Induction runs the same pair schedule at constant density', dens.withinFivePercent!==false,
+      PROTOCOL.inductionS+' s · '+indSched.groups.length+' groups · inter-group cycle '+dens.blockMeanGroupCycleS+' s block vs '+
+      dens.inductionMeanGroupCycleS+' s induction, pair proportion '+dens.blockPairProportion+' vs '+dens.inductionPairProportion+
+      '; '+dens.inductionPairsPerGapWindow+' pairs per 3-min gap window against §8.6\u2019s assumed 9'],
+    ['KSS at every block boundary', kssAfterEvery,
+      steps.filter(s=>s.k==='kss').length+' KSS points scheduled; a rating follows every tracking block'],
+    ['PVT at end of early phase and session end', pvtOK,
+      'Two '+(PROTOCOL.pvtS/60)+'-minute PVTs, seeded ISI '+(PROTOCOL.pvtIsiMinMs/1000)+'–'+(PROTOCOL.pvtIsiMaxMs/1000)+' s, pointerdown-timed; lapse threshold '+PROTOCOL.pvtLapseMs+' ms'],
+    ['Breaks offered at phase boundaries', steps.some(s=>s.offerBreakAfter)&&steps.some(s=>s.offerBreak),
+      S.breaks.length+' offer(s) recorded so far; offered after the early-phase PVT and at the induction boundary, taken or declined either way'],
+    ['S2.18 channels emitted under their protocol names', true,
+      'Band '+P('proxyBandLowHz')+'–'+P('proxyBandHighHz')+' Hz on the error signal, the tracked variable, the control output and the known injected input. The first two are equal by construction under a centred compensatory display; that is recorded, not assumed'],
+    ['Pre-onset velocity channel emitted (S2.14)', P('preOnsetVelWindowS')>0 && P('preOnsetVelPctile')>0,
+      'Velocity at every onset over a '+P('preOnsetVelWindowS')+' s window, plus the perturbation-free velocity distribution per block. The exclusion is applied downstream at the BASELINE block\u2019s p'+P('preOnsetVelPctile')+', never at the block it is applied to; exclusion rate is reported by condition and by history'],
+    ['History-gap power re-derived at the realised pair count',
+      !!(S.setup.gapPowerRef && S.setup.gapPowerDate),
+      S.setup.gapPowerRef ? ('§8.6 assumed '+PROTOCOL.gapPairsAssumed+' pairs per 3-min window; this schedule delivers '+dens.inductionPairsPerGapWindow+'. Re-derived — '+S.setup.gapPowerRef+', '+S.setup.gapPowerDate)
+        : ('§8.6 assumed '+PROTOCOL.gapPairsAssumed+' pairs per 3-min window; this schedule delivers '+dens.inductionPairsPerGapWindow+'. No re-derivation reference recorded (Standing Rule 19)')],
+    ['Induction windows slide (§8.6)', PROTOCOL.inductionStrideS<PROTOCOL.inductionWindowS,
+      PROTOCOL.inductionWindowS+' s windows at a '+PROTOCOL.inductionStrideS+' s stride; baseline is every window wholly inside minutes two and three. Those windows overlap, so the baseline SD is optimistic and the 2-SD departure is reported as a screening criterion with its sustained counterpart alongside'],
+    ['Break at a rating boundary is offered after the rating, and timed',
+      breakAfterRatingOK,
+      'The induction-end rating is what G2 reads, so no break is reachable until it is confirmed; realised length is recorded for every break taken'],
+    ['Standing Rule 19 — probe observation counts carried', !!probe.ruleNineteen,
+      'Probes deliver '+probe.quietHistoryN+' quiet and '+probe.recentHistoryN+' recent observations against '+sch.quietHistoryN+'/'+sch.recentHistoryN+' in a block; comparable only to equal-count, equally censored subsamples'],
+    ['No identifiable data collected', true,
+      'No name or free-text participant field exists. Code '+(S.code||'—')+' is a function of the participant number alone; uploads are blocked if an identifier block appears'],
+    ['Deviation and abandoned-analysis logging', true,
+      S.deviations.length+' deviation(s), '+S.abandoned.length+' abandoned analysis entr(y/ies) recorded'],
+    ['Parameters fixed and dated before pre-registration', paramsLocked()&&lateParams.length===0,
+      !paramsLocked() ? 'Some have no fixed-on date'
+        : (lateParams.length ? 'Fixed after pre-registration: '+lateParams.join(', ') : 'All '+PARAM_SPEC.length+' carry a logbook date on or before '+(S.setup.preregDate||'—'))]
+  ];
+  const rows=items.map(([n,ok,d])=>`<div class="gate"><span class="st ${ok?'ok':'no'}">${ok?'OK':'NO'}</span><div class="gb"><b>${esc(n)}</b><span>${esc(d)}</span></div></div>`).join('');
+  const devs=S.deviations.length?S.deviations.map(d=>`<div class="logline dev"><span class="t">${esc(d.at.slice(0,19).replace('T',' '))}</span><span>${esc(d.kind)}: ${esc(d.detail)}</span></div>`).join(''):'<div class="empty">No deviations logged.</div>';
+  const ab=S.abandoned.length?S.abandoned.map(d=>`<div class="logline"><span class="t">${esc(d.at.slice(0,10))}</span><span>${esc(d.text)}</span></div>`).join(''):'<div class="empty">No abandoned analyses recorded.</div>';
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="p-back">←</button><h2>Protocol conformance</h2></div>
+    <div class="blurb">Every row is a clause of Analysis Protocol v16 §1.2 or Proposal v16 §8.2. This screen is the instrument checking itself, not a claim that the study is sound.</div>
+    ${rows}
+    <div class="barcard" style="margin-top:16px"><h3>Deviation log (Standing Rule 1)</h3>${devs}
+      <div class="btnrow" style="margin-top:10px"><button class="small" id="p-adddev">Log a deviation</button></div></div>
+    <div class="barcard"><h3>Abandoned analyses (Standing Rule 7)</h3>${ab}
+      <div class="btnrow" style="margin-top:10px"><button class="small" id="p-addab">Record an abandoned analysis</button></div></div>`;
+  document.getElementById('p-back').onclick=goMain;
+  document.getElementById('p-adddev').onclick=()=>promptText('Log a deviation','What departed from the protocol, and when?',t=>{ deviation('manual',t); renderProtocolView(); });
+  document.getElementById('p-addab').onclick=()=>promptText('Abandoned analysis','What was tried and dropped? An undisclosed abandoned comparison is the commonest way an honest analysis becomes misleading.',t=>{ S.abandoned.push({at:nowISO(), text:t}); save(); renderProtocolView(); });
+}
+function promptText(title, blurb, cb){
+  openModal('<h3>'+esc(title)+'</h3><p>'+esc(blurb)+'</p><div class="field"><input id="pt-in" placeholder="…"></div><div class="btnrow"><button class="primary" id="pt-ok">Record</button><button class="ghost" id="pt-no">Cancel</button></div>');
+  document.getElementById('pt-no').onclick=closeModal;
+  document.getElementById('pt-ok').onclick=()=>{ const v=document.getElementById('pt-in').value.trim(); if(v){ cb(v); } closeModal(); };
+}
+
+/* ══ PARAMETERS VIEW ══════════════════════════════════════════════ */
+function renderParamsView(){
+  const host=document.getElementById('otherview');
+  const locked = S.mode==='study' && S.startedAt;
+  const rows=PARAM_SPEC.map(([k,,unit,note])=>`
+    <div class="barcard" style="padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(k)}</b>
+          <div class="note" style="margin:2px 0 0">${esc(note)}</div></div>
+        <input class="pv" data-k="${k}" value="${PARAMS[k].v}" inputmode="decimal" ${locked?'disabled':''}
+          style="width:96px;padding:9px;border-radius:10px;border:1px solid var(--card3);background:var(--card2);font-family:var(--mono);font-size:14px;text-align:right">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <span class="st ${PARAMS[k].fixedOn?'ok':'no'}" style="font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:20px;background:${PARAMS[k].fixedOn?'var(--c-block-tint)':'var(--warn-tint)'};color:${PARAMS[k].fixedOn?'var(--c-block)':'var(--warn)'}">${PARAMS[k].fixedOn?'fixed '+PARAMS[k].fixedOn:'not fixed'}</span>
+        <span class="note" style="margin:0;flex:1">${esc(unit)}</span>
+        ${locked?'':`<button class="small" data-fix="${k}">Fix today</button>`}
+      </div>
+    </div>`).join('');
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="pa-back">←</button><h2>Pilot parameters</h2></div>
+    <div class="blurb">${locked?'A study session is running — parameters are read-only. Changing a value mid-study is tuning, and the logbook cannot undo it.':'Set in pilot, then fixed with a date. A threshold chosen after seeing the number is not a threshold (Standing Rule 3).'}</div>
+    ${rows}
+    ${locked?'':`<div class="btnrow" style="margin-top:12px"><button class="primary" id="pa-fixall">Fix every parameter today</button></div>`}
+    <div class="note">Every change is written to the calibration record with the previous value, the new value and the date.</div>`;
+  document.getElementById('pa-back').onclick=()=>{ uiView='main'; renderApp(); };
+  if(!locked){
+    host.querySelectorAll('input.pv').forEach(inp=>{
+      inp.onchange=()=>{
+        const k=inp.dataset.k, nv=parseFloat(inp.value);
+        if(!isFinite(nv)){ inp.value=PARAMS[k].v; return; }
+        const old=PARAMS[k].v;
+        if(nv===old) return;
+        PARAMS[k].v=nv; PARAMS[k].fixedOn=null;
+        S.calibration.push({at:nowISO(), param:k, from:old, to:nv, mode:S.mode});
+        saveParams(); save(); log('Parameter '+k+' '+old+' → '+nv+' (calibration iteration recorded)');
+        renderParamsView();
+      };
+    });
+    host.querySelectorAll('button[data-fix]').forEach(b=>{
+      b.onclick=()=>{ const k=b.dataset.fix; PARAMS[k].fixedOn=today();
+        S.calibration.push({at:nowISO(), param:k, fixedOn:today(), value:PARAMS[k].v});
+        saveParams(); save(); log('Parameter '+k+' fixed at '+PARAMS[k].v+' on '+today()); renderParamsView(); };
+    });
+    const fa=document.getElementById('pa-fixall');
+    if(fa) fa.onclick=()=>{ Object.keys(PARAMS).forEach(k=>{ if(!PARAMS[k].fixedOn) PARAMS[k].fixedOn=today(); });
+      saveParams(); log('All parameters fixed on '+today()); renderParamsView(); };
+  }
+}
+
+/* ══ P0 — COMPUTATIONAL VALIDATION ════════════════════════════════
+   Protocol Part 3, P0. Estimators are validated against planted values
+   before any real data can be blamed. Run from the menu; results are
+   written to the log so the date they were run is on the record. ══ */
+function ouSim(lambda, sigma, n, rnd){
+  const dt=PROTOCOL.dt, phi=Math.exp(-lambda*dt), out=new Float64Array(n);
+  let x=0;
+  for(let i=0;i<n;i++){ x=phi*x+sigma*Math.sqrt(dt)*gaussFrom(rnd); out[i]=x; }
+  return out;
+}
+/* Same driving noise, different parameters. Sharing the noise across the
+   sigma values is not a shortcut: scaling sigma scales the trajectory
+   linearly, so this isolates the sigma → variance mapping from sampling
+   error instead of leaving the check at the mercy of it. */
+function ouSimOn(lambda, sigma, noise){
+  const dt=PROTOCOL.dt, phi=Math.exp(-lambda*dt), out=new Float64Array(noise.length);
+  let x=0;
+  for(let i=0;i<noise.length;i++){ x=phi*x+sigma*Math.sqrt(dt)*noise[i]; out[i]=x; }
+  return out;
+}
+/* Exponential decay constant fitted to the mean post-displacement
+   trajectory, bounded and censored at the analysis window. Part 4:
+   unbounded exponential fitting diverges on slow decays — constrain and
+   censor, and report the censoring rate. Amplitude is profiled out, so
+   only tau is searched. */
+function fitTau(mean, dt, winS){
+  const n=Math.min(mean.length, Math.round(winS/dt));
+  const lo=0.05, hi=winS;
+  const sse=(tau)=>{
+    let sxy=0, sxx=0;
+    for(let i=0;i<n;i++){ const b=Math.exp(-i*dt/tau); sxy+=b*mean[i]; sxx+=b*b; }
+    const A=sxx>0?sxy/sxx:0;
+    let s=0;
+    for(let i=0;i<n;i++){ const r=mean[i]-A*Math.exp(-i*dt/tau); s+=r*r; }
+    return s;
+  };
+  let a=Math.log(lo), b=Math.log(hi);
+  const gr=(Math.sqrt(5)-1)/2;
+  let c=b-gr*(b-a), d=a+gr*(b-a), fc=sse(Math.exp(c)), fd=sse(Math.exp(d));
+  for(let k=0;k<90;k++){
+    if(fc<fd){ b=d; d=c; fd=fc; c=b-gr*(b-a); fc=sse(Math.exp(c)); }
+    else { a=c; c=d; fc=fd; d=a+gr*(b-a); fd=sse(Math.exp(d)); }
+  }
+  const tau=Math.exp((a+b)/2);
+  return {tau, lambda:1/tau, censored: tau>=hi*0.995 || tau<=lo*1.005};
+}
+/* The naive estimator, kept solely so P0 can show what it does to a
+   truncated window. Not used anywhere else. */
+function fitTauLogLinear(mean, dt, winS){
+  const N=Math.min(mean.length, Math.round(winS/dt));
+  const xs=[], ys=[];
+  for(let i=0;i<N;i++){ if(mean[i]>1e-4){ xs.push(i*dt); ys.push(Math.log(mean[i])); } }
+  if(xs.length<10) return null;
+  const n=xs.length, sx=xs.reduce((a,b)=>a+b,0), sy=ys.reduce((a,b)=>a+b,0);
+  let sxx=0, sxy=0;
+  for(let i=0;i<n;i++){ sxx+=xs[i]*xs[i]; sxy+=xs[i]*ys[i]; }
+  const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+  return slope<0 ? -1/slope : null;
+}
+function p0Run(){
+  const rnd=mulberry32(20260924), dt=PROTOCOL.dt, out=[];
+
+  /* Mean post-displacement trajectory: the quantity the decay constant is
+     actually fitted to. Displacement and residual noise are the study's
+     own, so the fit meets the noise floor where it really does. */
+  const meanResponse=(tau, nObs, noiseSD, winS, amp)=>{
+    const n=Math.round(winS/dt), m=new Float64Array(n);
+    for(let t=0;t<nObs;t++){
+      let x=amp;
+      for(let i=0;i<n;i++){ m[i]+=x+noiseSD*gaussFrom(rnd); x*=Math.exp(-dt/tau); }
+    }
+    for(let i=0;i<n;i++) m[i]/=nObs;
+    return m;
+  };
+
+  /* 1. Recover a planted lambda from a simulated first-order system */
+  const trueTau=0.5556, trials=3000;
+  const fit1=fitTau(meanResponse(trueTau, trials, 0.06, 3.0, P('pertAmp')), dt, 3.0);
+  const err=Math.abs(fit1.lambda-1/trueTau)/(1/trueTau)*100;
+  out.push({name:'Planted λ recovered', pass:err<2,
+    detail:'true λ '+(1/trueTau).toFixed(3)+' → '+fit1.lambda.toFixed(4)+' ('+err.toFixed(2)+'% error; criterion <2%)'+(fit1.censored?' — CENSORED at the window':'')});
+
+  /* 2. Standing Rule 25 — a k-fold variance ratio is a k-fold apparent
+        stability loss. The squaring applies only to a sigma ratio. The
+        exchange rate is checked on both sides: sigma up and lambda down. */
+  const LS=60*7200;
+  const noise=new Float64Array(LS);
+  for(let i=0;i<LS;i++) noise[i]=gaussFrom(rnd);
+  const v1=variance(ouSimOn(1.0,1.0,noise)), v2=variance(ouSimOn(1.0,2.0,noise)), v3=variance(ouSimOn(1.0,3.0,noise));
+  const vL=variance(ouSimOn(0.25,1.0,noise));
+  const r2=v2/v1, r3v=v3/v1, rL=vL/v1;
+  out.push({name:'Variance exchange rate (Rule 25)',
+    pass:Math.abs(r2-4)<0.4 && Math.abs(r3v-9)<0.9 && Math.abs(rL-4)<0.4,
+    detail:'σ×2 → Var×'+r2.toFixed(2)+' (theory 4); σ×3 → Var×'+r3v.toFixed(2)+' (theory 9); λ÷4 → Var×'+rL.toFixed(2)+' (theory 4). A 2× disturbance increase reproduces the variance signal of a 4× stability loss. A k-fold variance ratio is a k-fold apparent stability loss — the squaring applies only to a σ ratio.'});
+
+  /* 3. Coloured forcing drives the autocorrelation-implied lambda down */
+  const white=ouSim(1.0,1.0,60*600,rnd);
+  const col=bandLimit(Float32Array.from(ouSim(1.0,1.0,60*600,rnd)), 0.1, 1.0);
+  const lamAC=a=>{ const ac=lag1(a); return ac>0&&ac<1 ? -Math.log(ac)/dt : null; };
+  const lw=lamAC(white), lc=lamAC(col);
+  out.push({name:'Coloured-forcing failure reproduced', pass: lc!=null&&lw!=null&&lw/lc>=10,
+    detail:'AC(1)-implied λ: white '+ (lw!=null?lw.toFixed(3):'—') +' → band-limited '+(lc!=null?lc.toFixed(3):'—')+' (ratio '+((lw&&lc)?(lw/lc).toFixed(1):'—')+'×; criterion ≥10×)'});
+
+  /* 4. History gap and the cost of the common 3.0 s window (S2.14).
+        Run at the study's own observation counts — 10 quiet-history and 8
+        recent-history per condition — so the shrinkage factor is the one
+        the power re-derivation actually needs. */
+  const gapAt=(win)=>{
+    const quietTau=1.06, recentTau=2.01, noise=0.06, reps=200;
+    let acc=0, n=0, cens=0;
+    for(let r=0;r<reps;r++){
+      const q=fitTau(meanResponse(quietTau, 10, noise, win, P('pertAmp')), dt, win);
+      const c=fitTau(meanResponse(recentTau, 8, noise, win, P('pertAmp')), dt, win);
+      if(q.censored||c.censored) cens++;
+      acc += (c.tau-q.tau)/q.tau; n++;
+    }
+    return {gap:acc/n, censoredRate:cens/reps};
+  };
+  const gFull=gapAt(8.0), g3=gapAt(3.0);
+  const shrink=(gFull.gap&&g3.gap)? g3.gap/gFull.gap : null;
+  out.push({name:'History gap recovered; 3.0 s censoring quantified (S2.14)',
+    pass: g3.gap>0 && shrink!=null && shrink<=1.05,
+    detail:'planted +90%: unrestricted window '+(gFull.gap*100).toFixed(0)+'%, common 3.0 s window '+(g3.gap*100).toFixed(0)
+      +'%; shrinkage factor '+(shrink!=null?shrink.toFixed(2):'—')+'; censoring rate '+(g3.censoredRate*100).toFixed(0)
+      +'% at 3 s, '+(gFull.censoredRate*100).toFixed(0)+'% unrestricted. Re-derive power at this window before collection; if power at n = 40 falls below 0.80 the perturbation count is raised.'});
+
+  /* 4b. §8.2a-i — the reason the window is common. Plant NO gap, then fit
+     each history over the window that would be available to it: P1 three
+     seconds, P2 six. Any gap that appears was manufactured by the schedule.
+     Run with two estimators, because which one is used turns out to matter
+     more than the window does, and that is worth knowing before collection. */
+  const unequal=(()=>{
+    const tau=1.06, noise=0.06, reps=200;
+    let nB=0, cB=0, nL=0, cL=0;
+    for(let r=0;r<reps;r++){
+      const m_q3=meanResponse(tau, 10, noise, 3.0, P('pertAmp'));
+      const m_r6=meanResponse(tau, 8, noise, 6.0, P('pertAmp'));
+      const m_r3=meanResponse(tau, 8, noise, 3.0, P('pertAmp'));
+      const q3=fitTau(m_q3, dt, 3.0).tau, r6=fitTau(m_r6, dt, 6.0).tau, r3=fitTau(m_r3, dt, 3.0).tau;
+      nB+=(r6-q3)/q3; cB+=(r3-q3)/q3;
+      const lq3=fitTauLogLinear(m_q3, dt, 3.0), lr6=fitTauLogLinear(m_r6, dt, 6.0), lr3=fitTauLogLinear(m_r3, dt, 3.0);
+      if(lq3&&lr6&&lr3){ nL+=(lr6-lq3)/lq3; cL+=(lr3-lq3)/lq3; }
+    }
+    return {naiveBounded:nB/reps, commonBounded:cB/reps, naiveLog:nL/reps, commonLog:cL/reps};
+  })();
+  out.push({name:'Unequal windows manufacture a gap; the common window does not (§8.2a-i)',
+    pass: Math.abs(unequal.commonBounded)<0.05 && Math.abs(unequal.commonLog)<Math.abs(unequal.naiveLog),
+    detail:'with NO true gap planted. Naive log-linear fit: unequal windows (P1 3 s, P2 6 s) return '
+      +(unequal.naiveLog*100).toFixed(0)+'% — a gap manufactured entirely by the schedule — against '
+      +(unequal.commonLog*100).toFixed(0)+'% at the common window. Bounded amplitude-profiled fit: '
+      +(unequal.naiveBounded*100).toFixed(1)+'% and '+(unequal.commonBounded*100).toFixed(1)
+      +'%. The common window is the protection; the estimator choice is a second one, and both are needed.'});
+
+  /* 5. G7 specificity — p0 of the non-monotonicity classifier on flat noise */
+  const W=20, TR=1000, PERM=200;
+  let flagged=0;
+  for(let t=0;t<TR;t++){
+    const s=[]; for(let w=0;w<W;w++) s.push(gaussFrom(rnd));
+    const idx=a=>{ let mx=-Infinity; a.forEach(v=>{ if(v>mx) mx=v; }); return mx-a[a.length-1]; };
+    const obs=idx(s);
+    let ge=0;
+    for(let p=0;p<PERM;p++){
+      const sh=s.slice();
+      for(let i=sh.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const x=sh[i]; sh[i]=sh[j]; sh[j]=x; }
+      if(idx(sh)>=obs) ge++;
+    }
+    if(ge/PERM<0.05) flagged++;
+  }
+  const p0=flagged/TR;
+  out.push({name:'Classifier false-positive rate p₀ (G7a)', pass:true,
+    detail:'p₀ = '+p0.toFixed(3)+' on '+TR+' flat noisy trajectories. G7 needs the qualifying proportion to exceed p₀ + 0.10. A sensitivity check is not a specificity check.'});
+
+  /* 5b. The OTHER thing §8.6 records, which has never had a specificity
+     check. §8.6 asks for two quantities per measure: the trajectory SHAPE,
+     whose false-positive rate G7a computes above, and "the window at which
+     each measure first departs baseline by two standard deviations". The
+     second has no gate and no null. It is worth one, because the baseline is
+     that participant's own windows in minutes two and three — two or three
+     windows of a near-stationary series — and an SD estimated from three
+     points understates the spread of the twenty windows it is then applied
+     to. So the criterion fires on series with nothing in them.
+
+     Run here on flat trajectories with no departure planted, at the study's
+     own window and stride, so the number is known before collection rather
+     than discovered in the data. This is p0 for the departure criterion and
+     it belongs beside G7a's p0 for the shape classifier. */
+  const dep=(()=>{
+    const winN=Math.floor((PROTOCOL.inductionS-PROTOCOL.inductionWindowS)/PROTOCOL.inductionStrideS)+1;
+    const b0=PROTOCOL.gapBaselineRangeS[0], b1=PROTOCOL.gapBaselineRangeS[1];
+    const starts=[]; for(let k=0;k<winN;k++) starts.push(k*PROTOCOL.inductionStrideS);
+    const baseIdx=starts.map((t,k)=>({t,k})).filter(o=>o.t>=b0 && o.t+PROTOCOL.inductionWindowS<=b1).map(o=>o.k);
+    const postIdx=starts.map((t,k)=>({t,k})).filter(o=>o.t>=b1).map(o=>o.k);
+    /* Overlapping windows share samples, so the series is autocorrelated.
+       Build it that way rather than as independent draws, or the null is
+       flattering. */
+    const lag=PROTOCOL.inductionStrideS/PROTOCOL.inductionWindowS;  // shared fraction
+    const rho=Math.max(0,1-lag);
+    let fired=0, sust=0, cross=0;
+    const TRIALS=600;
+    for(let t=0;t<TRIALS;t++){
+      const y=new Float64Array(winN); let prev=gaussFrom(rnd);
+      for(let k=0;k<winN;k++){ prev=rho*prev+Math.sqrt(1-rho*rho)*gaussFrom(rnd); y[k]=prev; }
+      const bv=baseIdx.map(k=>y[k]);
+      const m=bv.reduce((a,b)=>a+b,0)/bv.length;
+      const sd=Math.sqrt(bv.reduce((a,b)=>a+(b-m)*(b-m),0)/(bv.length-1));
+      if(!(sd>0)) continue;
+      const hits=postIdx.filter(k=>Math.abs((y[k]-m)/sd)>=2);
+      cross+=hits.length;
+      if(hits.length) fired++;
+      for(let i=0;i+1<hits.length;i++) if(hits[i+1]===hits[i]+1){ sust++; break; }
+    }
+    return {p0First:fired/TRIALS, p0Sustained:sust/TRIALS, meanCrossings:cross/TRIALS,
+            baselineWindows:baseIdx.length, postWindows:postIdx.length};
+  })();
+  out.push({name:'Departure-criterion false-positive rate p₀ (§8.6, new)',
+    pass: dep.p0First<=0.10,
+    detail:'On flat trajectories with NO departure planted, the §8.6 rule "first departs baseline by two standard deviations" fires in '
+      +(dep.p0First*100).toFixed(0)+'% of series ('+(dep.p0Sustained*100).toFixed(0)
+      +'% for two consecutive windows), with '+dep.meanCrossings.toFixed(1)+' crossings per series. Baseline is '
+      +dep.baselineWindows+' window(s) against '+dep.postWindows+' tested. An SD from that few windows of a stationary series '
+      +'understates the spread it is applied to, so the criterion is not a test and a departure time read off it is not evidence. '
+      +'Calibrate it the way G7b calibrates the shape — against a surrogate null built by block-permuting that participant\u2019s own '
+      +'window series — or report the departure as descriptive only. Fixing the stride does not fix this; the criterion is the problem. '
+      +'THIS IS A PROTOCOL-LEVEL DEFECT AND IS NOT REPAIRABLE IN THE RUNNER.'});
+
+  /* 6. First-passage inversion */
+  const fpt=(lam,sig)=>{ let tot=0,c=0;
+    for(let t=0;t<300;t++){ let x=3.0,i=0;
+      while(x>1.5 && i<60*60){ x=Math.exp(-lam*dt)*x+sig*Math.sqrt(dt)*gaussFrom(rnd); i++; }
+      tot+=i*dt; c++; }
+    return tot/c; };
+  const f1=fpt(0.08,1.0), f2=fpt(0.08,2.0);
+  out.push({name:'First-passage inverts under rising disturbance', pass:f2<f1,
+    detail:'σ×1 '+f1.toFixed(1)+' s → σ×2 '+f2.toFixed(1)+' s ('+(((f2-f1)/f1)*100).toFixed(0)+'%). A noisier process crosses any threshold sooner.'});
+
+  return out;
+}
+function variance(a){ let m=0; for(let i=0;i<a.length;i++) m+=a[i]; m/=a.length; let s=0; for(let i=0;i<a.length;i++){ const d=a[i]-m; s+=d*d; } return s/(a.length-1); }
+let p0Results=null;
+function renderP0View(){
+  const host=document.getElementById('otherview');
+  const rows=p0Results? p0Results.map(r=>`<div class="gate"><span class="st ${r.pass?'ok':'no'}">${r.pass?'OK':'NO'}</span>
+    <div class="gb"><b>${esc(r.name)}</b><span>${esc(r.detail)}</span></div></div>`).join('')
+    : '<div class="empty">Not run in this browser yet.</div>';
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="z-back">←</button><h2>P0 — computational validation</h2></div>
+    <div class="blurb">Confirm the estimators recover values deliberately planted, before any real data can be blamed. Takes a few seconds.</div>
+    <div class="btnrow" style="margin-bottom:14px"><button class="primary" id="z-run">Run P0 checks</button></div>
+    ${rows}
+    <div class="note">Results are written to the session log with the date they were run, which is the part that matters.</div>`;
+  document.getElementById('z-back').onclick=goMain;
+  document.getElementById('z-run').onclick=()=>{
+    const b=document.getElementById('z-run'); b.disabled=true; b.textContent='Running…';
+    setTimeout(()=>{
+      p0Results=p0Run();
+      const pass=p0Results.filter(r=>r.pass).length;
+      log('P0 checks run — '+pass+' of '+p0Results.length+' passed');
+      p0Results.forEach(r=>log('P0 · '+r.name+' — '+(r.pass?'pass':'FAIL')+' — '+r.detail));
+      renderP0View();
+    },50);
+  };
+}
+
+/* ══ CALIBRATION (G1) ═════════════════════════════════════════════ */
+function renderCalibView(){
+  const host=document.getElementById('otherview');
+  let store=[];
+  try{ store=JSON.parse(localStorage.getItem('sh_v16_calib')||'[]'); }catch(e){}
+  const cells=['road','load','fatigue'];
+  const agg={}, aggDep={}, aggShare={};
+  cells.forEach(c=>{ const rs=store.filter(r=>r.cell===c);
+    const m=k=>rs.length? rs.reduce((a,b)=>a+(b[k]||0),0)/rs.length : null;
+    agg[c]=rs.length? rs.reduce((a,b)=>a+b.increasePct,0)/rs.length : null;
+    aggDep[c]=m('deploymentIncreasePct'); aggShare[c]=m('fitWindowShare'); });
+  const pairOK=(a,b)=>{ if(agg[a]==null||agg[b]==null) return null;
+    const d=Math.abs(agg[a]-agg[b]), sm=Math.min(Math.abs(agg[a]),Math.abs(agg[b]));
+    return {d, sm, ok:d<0.15*sm}; };
+  const pairs=[['road','load'],['road','fatigue'],['load','fatigue']];
+  const prows=pairs.map(([a,b])=>{ const r=pairOK(a,b);
+    return `<div class="gate"><span class="st ${r?(r.ok?'ok':'no'):'na'}">${r?(r.ok?'OK':'NO'):'—'}</span>
+      <div class="gb"><b>${a} vs ${b} — SDLP-premise</b><span>${r?('difference '+r.d.toFixed(1)+' pp against a tolerance of '+(0.15*r.sm).toFixed(1)+' pp'):'not enough pilot data'}</span></div></div>`; }).join('');
+  /* G1 also requires SDLP-deployment reported alongside with its residual
+     quantified (S2.1b), and a realised premise duration of at least 150 s
+     per block. v3's screen scored neither. */
+  const depRows=cells.map(c=>`<div class="sumrow"><span>${c} — premise / deployment increase</span><span>${agg[c]!=null?agg[c].toFixed(1)+'%':'—'} / ${aggDep[c]!=null?aggDep[c].toFixed(1)+'%':'—'}</span></div>
+    <div class="sumrow"><span>${c} — residual after premise matching · fit-window variance share</span><span>${(agg[c]!=null&&aggDep[c]!=null)?(aggDep[c]-agg[c]).toFixed(1)+' pp':'—'} · ${aggShare[c]!=null?aggShare[c].toFixed(3):'—'}</span></div>`).join('');
+  const short=store.filter(r=>r.premiseS<PROTOCOL.premiseFloorS);
+  const n=new Set(store.map(r=>r.code)).size;
+  const rows=store.slice().reverse().slice(0,20).map(r=>`<tr><td>${esc(r.at.slice(0,10))}</td><td>${esc(r.code)}</td><td>${esc(r.cell)}</td><td class="mono">${r.increasePct.toFixed(1)}%</td><td class="mono">${r.deploymentIncreasePct!=null?r.deploymentIncreasePct.toFixed(1)+'%':'—'}</td><td class="mono">${r.premiseS}s</td></tr>`).join('');
+  const pilotOnly = S.mode!=='study';
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="cb-back">←</button><h2>G1 — calibration</h2></div>
+    <div class="blurb">Can road disturbance, cognitive load and fatigue each be tuned to produce statistically indistinguishable SDLP-premise increases? Scored on the perturbation-free measure, because the probe adds variance to the quantity being matched. Criterion: pairwise difference under 15% of the smaller effect, n ≈ 6, realised SDLP-premise duration ≥ 150 s per block, SDLP-deployment reported alongside and its residual quantified (S2.1b).</div>
+    <div class="gate"><span class="st ${n>=6?'ok':'na'}">${n>=6?'OK':'n='+n}</span><div class="gb"><b>Pilot participants</b><span>${n} of about 6</span></div></div>
+    ${prows}
+    <div class="gate"><span class="st ${store.length?(short.length?'no':'ok'):'na'}">${store.length?(short.length?'NO':'OK'):'—'}</span>
+      <div class="gb"><b>Realised premise duration ≥ ${PROTOCOL.premiseFloorS} s per block</b>
+      <span>${store.length?(short.length? short.length+' of '+store.length+' recorded cells fall below the floor and are not G1-eligible' : 'All '+store.length+' recorded cells meet the floor'):'No cells recorded'}</span></div></div>
+    <div class="barcard" style="margin-top:14px"><h3>SDLP-deployment alongside, and the residual</h3>${store.length?depRows:'<div class="empty">No cells recorded.</div>'}
+      <div class="note">The residual is the deployment offset that survives premise matching. Expected positive in the fatigued cell — the probe assists the statistic under criticism, so any advantage the corrected rules show in S3 is a lower bound.</div></div>
+    <div class="barcard"><h3>Pilot record</h3>
+      ${store.length?`<div class="tablewrap"><table><thead><tr><th>Date</th><th>Code</th><th>Cell</th><th class="mono">Premise</th><th class="mono">Deploy</th><th class="mono">Dur</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No pilot sessions recorded on this device.</div>'}
+      <div class="btnrow" style="margin-top:10px"><button class="small" id="cb-add" ${pilotOnly?'':'disabled'}>Add this session's cells</button><button class="small warn" id="cb-clear">Clear</button></div>
+      ${pilotOnly?'':'<div class="note">G1 is a pilot gate. A study session cannot be added to the calibration record.</div>'}</div>
+    <div class="note">The stopping rule and the iteration cap are pre-registered, not decided here. This screen records what happened; it does not decide when to stop.</div>`;
+  document.getElementById('cb-back').onclick=goMain;
+  document.getElementById('cb-clear').onclick=()=>{ try{ localStorage.removeItem('sh_v16_calib'); }catch(e){} renderCalibView(); };
+  const addBtn=document.getElementById('cb-add');
+  if(addBtn && pilotOnly) addBtn.onclick=()=>{
+    const get=c=>{ const i=STEPS.findIndex(s=>s.k==='track'&&s.cond===c); return i>=0?S.steps[i].value:null; };
+    const b=get('base'), r=get('road'), l=get('load'), f=get('fatBase');
+    if(!b||!b.premise||b.premise.sdlp==null){ openModal('<h3>Nothing to add</h3><p>The baseline block has not produced an SDLP-premise value yet.</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>'); document.getElementById('m-close').onclick=closeModal; return; }
+    const add=(cell,v)=>{ if(!v||!v.premise||v.premise.sdlp==null) return null;
+      const dep=(v.deployment&&v.deployment.mean!=null&&b.deployment&&b.deployment.mean)?((v.deployment.mean-b.deployment.mean)/b.deployment.mean)*100:null;
+      return {at:nowISO(), code:S.code||'—', cell,
+        increasePct:((v.premise.sdlp-b.premise.sdlp)/b.premise.sdlp)*100,
+        deploymentIncreasePct:dep,
+        fitWindowShare:v.fitWindow?v.fitWindow.shareOfBlockVariance:null,
+        premiseS:v.premise.durationS}; };
+    const recs=[add('road',r), add('load',l), add('fatigue',f)].filter(Boolean);
+    let st2=[]; try{ st2=JSON.parse(localStorage.getItem('sh_v16_calib')||'[]'); }catch(e){}
+    /* One row per participant per cell. v3 appended on every press, so a
+       second click doubled that participant's weight in the mean. */
+    recs.forEach(rec=>{ const k=st2.findIndex(x=>x.code===rec.code && x.cell===rec.cell);
+      if(k>=0) st2[k]=rec; else st2.push(rec); });
+    try{ localStorage.setItem('sh_v16_calib', JSON.stringify(st2)); }catch(e){}
+    log('Calibration record updated — '+recs.length+' cell(s) for '+(S.code||'—'));
+    renderCalibView();
+  };
+}
+
+/* ══ TRACE VIEWER ═════════════════════════════════════════════════ */
+let traceRows=[], traceInduction=[];
+function renderAnalyze(){
+  const host=document.getElementById('otherview');
+  const conds=['base','road','load','removal','fatBase','fatRoad','persist'];
+  const summary=conds.map(c=>{
+    const rs=traceRows.filter(r=>r.cond===c);
+    const avg=k=>rs.length?rs.reduce((a,b)=>a+(b[k]||0),0)/rs.length:null;
+    return {c, premise:avg('premise'), deploy:avg('deploy'), n:rs.length};
+  }).filter(s=>s.n>0);
+  const maxV=Math.max(0.01, ...summary.flatMap(s=>[s.premise,s.deploy]).filter(v=>v!=null));
+  const bars=summary.map(s=>`
+    <div class="barrow"><div class="lbl"><span>${esc(CONDITIONS[s.c]?CONDITIONS[s.c].title:s.c)} · premise (${s.n})</span><span>${s.premise!=null?s.premise.toFixed(4):'—'}</span></div>
+      <div class="bartrack"><div class="barfill" style="width:${s.premise!=null?(s.premise/maxV*100):0}%; background:var(--c-block)"></div></div></div>
+    <div class="barrow"><div class="lbl"><span>${esc(CONDITIONS[s.c]?CONDITIONS[s.c].title:s.c)} · deployment</span><span>${s.deploy!=null?s.deploy.toFixed(4):'—'}</span></div>
+      <div class="bartrack"><div class="barfill" style="width:${s.deploy!=null?(s.deploy/maxV*100):0}%; background:var(--c-probe); opacity:.7"></div></div></div>`).join('');
+  host.innerHTML=`<div class="screenhead"><button class="iconbtn" id="a-back">←</button><h2>Trace</h2></div>
+    <div class="blurb">Load session .json files to see SDLP both ways and the induction's 1-minute trajectory. This is a look, not an analysis — the analysis runs on the deposited files.</div>
+    <div class="btnrow" style="margin-bottom:16px"><button class="primary" id="a-load">Load files</button><button class="ghost" id="a-clear">Clear</button></div>
+    ${traceInduction.length?`<div class="barcard"><h3>Induction SDLP, 1-minute windows</h3>
+      <div class="trackwrap" style="padding:8px"><canvas id="trace-canvas" height="150"></canvas></div>
+      <div class="figlegend">${traceInduction.map((s,i)=>`<span><i style="background:${cssvar(['--c-block','--c-probe','--c-assess','--c-break','--c-flow'][i%5])}"></i>${esc(s.code)}</span>`).join('')}</div>
+      <div class="caption">Never averaged across participants (Standing Rule 16).</div></div>`:''}
+    <div class="barcard"><h3>SDLP by condition</h3>${summary.length?bars:'<div class="empty">No sessions loaded.</div>'}</div>`;
+  document.getElementById('a-back').onclick=goMain;
+  document.getElementById('a-clear').onclick=()=>{ traceRows=[]; traceInduction=[]; renderAnalyze(); };
+  document.getElementById('a-load').onclick=()=>document.getElementById('analyze-file').click();
+  if(traceInduction.length) drawTrace(document.getElementById('trace-canvas'), traceInduction);
+}
+function ingestSession(rec){
+  if(!rec || !rec.schedule || !Array.isArray(rec.schedule.steps)) return 0;
+  const code=(rec.participant&&rec.participant.code)||'—';
+  let n=0;
+  rec.schedule.steps.forEach(s=>{
+    const v=s.value;
+    if(v && v.premise && v.premise.sdlp!=null){
+      traceRows.push({code, cond:s.condition||v.cond, premise:v.premise.sdlp, deploy:v.deployment?v.deployment.mean:null});
+      n++;
+    }
+    if(v && v.inductionWindows && v.inductionWindows.oneMin)
+      traceInduction.push({code, points:v.inductionWindows.oneMin.map(w=>({t:w.tStartS, sdlp:w.sdlpPremise!=null?w.sdlpPremise:w.sdlpDeployment}))});
+  });
+  return n;
+}
+function drawTrace(canvas, series){
+  if(!canvas) return;
+  const w=canvas.clientWidth||300, h=150;
+  canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const all=series.flatMap(s=>s.points).filter(p=>p.sdlp!=null);
+  if(!all.length) return;
+  const maxT=Math.max(...all.map(p=>p.t))||1, maxV=Math.max(0.01,...all.map(p=>p.sdlp));
+  const pal=['--c-block','--c-probe','--c-assess','--c-break','--c-flow'];
+  ctx.strokeStyle=cssvar('--card3'); ctx.beginPath(); ctx.moveTo(0,h-10); ctx.lineTo(w,h-10); ctx.stroke();
+  series.forEach((s,si)=>{
+    const pts=s.points.filter(p=>p.sdlp!=null);
+    if(!pts.length) return;
+    ctx.beginPath(); ctx.strokeStyle=cssvar(pal[si%pal.length]); ctx.lineWidth=2;
+    pts.forEach((p,i)=>{ const x=(p.t/maxT)*w, y=(h-14)-(p.sdlp/maxV)*(h-24); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke();
+  });
+}
+
+/* ══ MODAL / MENU ═════════════════════════════════════════════════ */
+function openModal(html){ document.getElementById('modal-card').innerHTML=html; document.getElementById('modal').hidden=false; }
+function closeModal(){ document.getElementById('modal').hidden=true; }
+function showDoneModal(){
+  const ok=S.completedSuccessfully;
+  const mc=manipulationCheck();
+  openModal('<h3>'+(ok?'Session complete':'Session incomplete')+'</h3><p>'
+    +(ok?'All steps finished.':'The session ended before all steps were completed'+(S.withdrawn?' — withdrawn at '+esc(S.withdrawnAtPhase||'unknown phase')+'.':'.'))
+    +' G2: '+esc(mc.result)+'. The file has been saved automatically.</p>'
+    +'<div class="btnrow"><button class="primary" id="m-ok">Close</button></div>');
+  document.getElementById('m-ok').onclick=closeModal;
+}
+function openMenu(){
+  const active=!!S.startedAt && S.current<STEPS.length-1 && !S.finalized;
+  openModal(`<h3>Menu</h3><div class="sheetlist">
+    ${active?`<button class="warn" id="mn-withdraw">✕ Participant stops here</button>`:''}
+    <button id="mn-protocol">✓ Protocol conformance</button>
+    <button id="mn-params">⚙ Pilot parameters</button>
+    <button id="mn-p0">∿ P0 computational validation</button>
+    <button id="mn-calib">◎ G1 calibration record</button>
+    <button id="mn-dist">⬆ Load disturbance trace</button>
+    <button id="mn-surrogate">⚠ Install pilot surrogate disturbance</button>
+    <button id="mn-export">⬇ Save session file</button>
+    <button id="mn-import">⬆ Load session file</button>
+    <button id="mn-analyze">▤ Trace viewer</button>
+    <button id="mn-testmode">🧪 Testing mode — skip steps: ${testMode?'ON':'OFF'}</button>
+    <button class="warn" id="mn-reset">↺ Reset session</button>
+  </div>`);
+  const on=(id,fn)=>{ const b=document.getElementById(id); if(b) b.onclick=fn; };
+  if(active) on('mn-withdraw',()=>{ closeModal(); confirmWithdraw(); });
+  on('mn-protocol',()=>{ closeModal(); uiView='protocol'; renderApp(); });
+  on('mn-params',()=>{ closeModal(); uiView='params'; renderApp(); });
+  on('mn-p0',()=>{ closeModal(); uiView='p0'; renderApp(); });
+  on('mn-calib',()=>{ closeModal(); uiView='calib'; renderApp(); });
+  on('mn-dist',()=>{ closeModal(); document.getElementById('dist-file').click(); });
+  on('mn-surrogate',()=>{ closeModal(); installSurrogate(); renderApp(); });
+  on('mn-export',()=>{ closeModal(); exportSession(); });
+  on('mn-import',()=>{ closeModal(); document.getElementById('import-file').click(); });
+  on('mn-analyze',()=>{ closeModal(); uiView='analyze'; renderApp(); });
+  on('mn-testmode',()=>{ testMode=!testMode; try{ localStorage.setItem('sh_v16_testmode', testMode?'1':'0'); }catch(e){}
+    log('Testing mode '+(testMode?'enabled':'disabled')); closeModal(); renderApp(); });
+  on('mn-reset',()=>{ closeModal(); confirmReset(); });
+}
+function confirmReset(){
+  openModal('<h3>Reset session?</h3><p>Clears this session and every stored block on this device. Save a copy first if you need it.</p><div class="btnrow"><button class="ghost" id="m-save">Save first</button><button class="warn" id="m-yes">Reset</button></div>');
+  document.getElementById('m-save').onclick=()=>exportSession();
+  document.getElementById('m-yes').onclick=()=>{ resetAll(); closeModal(); renderApp(); };
+}
+
+/* ── file inputs ────────────────────────────────────────────────── */
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+document.getElementById('menu-btn').onclick=openMenu;
+document.getElementById('import-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const rec=JSON.parse(r.result);
+      const src=rec.schedule?rec:null;
+      if(!src) throw new Error('shape');
+      openModal('<h3>Loaded for viewing</h3><p>Session files are read-only here. Use the trace viewer to inspect them; a finished session is not resumed from a file.</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      document.getElementById('m-close').onclick=closeModal;
+      traceRows=[]; traceInduction=[]; ingestSession(rec); uiView='analyze'; renderApp();
+    }catch(err){
+      openModal('<h3>Could not load</h3><p>That does not look like a Steady Hands Study 2 session file.</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      document.getElementById('m-close').onclick=closeModal;
+    }
+  };
+  r.readAsText(f); e.target.value='';
+};
+document.getElementById('analyze-file').onchange=e=>{
+  const files=Array.from(e.target.files||[]); if(!files.length) return;
+  let done=0;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=()=>{ try{ ingestSession(JSON.parse(r.result)); }catch(err){}
+      if(++done===files.length) renderAnalyze(); };
+    r.readAsText(f);
+  });
+  e.target.value='';
+};
+document.getElementById('dist-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      let samples=null, hz=100, meta={name:f.name};
+      if(/\.json$/i.test(f.name)){
+        const rec=JSON.parse(r.result);
+        samples=rec.samples||rec.data||rec.lateral||rec.values;
+        hz=rec.hz||rec.sampleRate||rec.fs||100;
+        meta=Object.assign(meta,{class:rec.class||rec.surfaceClass||null, journey:rec.journey||rec.source||null,
+          note:rec.note||null, providedCorrelationTimeS:rec.correlationTimeS||null});
+      } else {
+        const lines=String(r.result).replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+        const head=lines[0].split(',');
+        let col=0, start=0;
+        if(head.some(h=>isNaN(parseFloat(h)))){
+          start=1;
+          const idx=head.findIndex(h=>/lat|ay|accel|y/i.test(h.trim()));
+          col=idx>=0?idx:0;
+        }
+        samples=lines.slice(start).map(l=>parseFloat(l.split(',')[col])).filter(v=>isFinite(v));
+      }
+      if(!samples || samples.length<600) throw new Error('too short');
+      installDisturbance(Float32Array.from(samples), hz, meta);
+      openModal('<h3>Trace installed</h3><p>'+esc(f.name)+' — '+samples.length+' samples at '+hz+' Hz, resampled to 60 Hz, band-limited '
+        +P('distBandLowHz')+'–'+P('distBandHighHz')+' Hz and scaled to an RMS of '+P('distRms')+'. Measured correlation time '
+        +(DIST.meta.correlationTimeS||'—')+' s'+(DIST.meta.inS12Range?' — inside the S1.2 measured range.':' — OUTSIDE the S1.2 measured range of 0.121–0.443 s.')
+        +'</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      document.getElementById('m-close').onclick=closeModal;
+      renderApp();
+    }catch(err){
+      openModal('<h3>Could not read that trace</h3><p>Expected a JSON file with a <code>samples</code> array and an <code>hz</code> field, or a CSV with one column of lateral acceleration. At least 10 seconds of data.</p><div class="btnrow"><button class="ghost" id="m-close">Close</button></div>');
+      document.getElementById('m-close').onclick=closeModal;
+    }
+  };
+  r.readAsText(f); e.target.value='';
+};
+
+/* ── display refresh measurement, once, at load ─────────────────── */
+let measuredHz=null;
+(function measureHz(){
+  const ts=[]; let k=0;
+  const f=(t)=>{ ts.push(t); if(++k<40) requestAnimationFrame(f);
+    else{ const d=[]; for(let i=1;i<ts.length;i++) d.push(ts[i]-ts[i-1]);
+      d.sort((a,b)=>a-b); const med=d[Math.floor(d.length/2)];
+      measuredHz=med>0?+(1000/med).toFixed(1):null;
+      if(S.env) { S.env.displayHz=measuredHz; save(); } } };
+  requestAnimationFrame(f);
+})();
+
+/* ── boot ───────────────────────────────────────────────────────── */
+loadParams();
+loadDistFromStore();
+loadSession();
+if(!S.steps.length){ S.seed=(Date.now()^hashStr(String(Math.random())))>>>0; initSteps(); }
+else STEPS=buildSteps(S.orderIndex);
+if(S.steps[S.current] && S.steps[S.current].status==='locked') S.steps[S.current].status='current';
+if(S.startedAt) startTicker();
+renderApp();
+</script>
+</body>
+</html>
